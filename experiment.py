@@ -41,7 +41,26 @@ PROMPT = """
         """
 LLM_TEMPERATURE = 0.6
 
-
+INTO_ANIM_LIST = [
+    "Hey_4"
+    "Explain_1",
+    "Give_6",
+    "Explain_10",
+    "Please_1"
+    "Explain_11",
+    "Give_4",
+    "Explain_2",
+    "Explain_4",
+    "ShowTablet_2"
+    "Explain_6",
+    "Far_2",
+    "Explain_2",
+    "Give_6",
+]
+NO_ANIM = ["Bored_1", "Desperate_1", "Desperate_5", "No_8"]
+YES_ANIM = ["Happy_4", "Yes_3", "Yes_1"]
+NOT_UNDERSTAND_ANIM = ["IDontKnow_1", "IDontKnow_2", "No_2", "No_8"]
+TIMING_ANIM = ["YouKnowWhat_1", "YouKnowWhat_5", "Hysterical_1"]
 class Authenticator:
 
     def __init__(self, username, password):
@@ -276,19 +295,19 @@ def trial_loop(stim_list, stim_path):
             if result != '':
                 if result  == "yes":
                     not_understood = False
-                    play_audio_file(pepper_ip, RECORDING_PATH + "correct/" + random.choice(correct_responses))
+                    play_audio_file(pepper_ip, RECORDING_PATH + "correct/" + random.choice(correct_responses), random.choice[YES_ANIM])
                     input(f"Press Enter when you're ready to record 🎙️ ")
                     recorder = Recorder()
                     recorder.start_recording(RECORDING_PATH + "participant/participant_recordings/" + f"correct_{stim}")
                     print("recorded")
                 elif result == "no":
                     not_understood = False
-                    play_audio_file(pepper_ip, RECORDING_PATH + "incorrect/" + random.choice(incorrect_responses), bored_1)
+                    play_audio_file(pepper_ip, RECORDING_PATH + "incorrect/" + random.choice(incorrect_responses), random.choice[NO_ANIM])
                     input(f"Press Enter when you're ready to record 🎙️ ")
                     recorder = Recorder()
                     recorder.start_recording(RECORDING_PATH + "participant/participant_recordings/" + f"incorrect_{stim}")
                 else:
-                    play_audio_file(pepper_ip, RECORDING_PATH + "timing/unknown.wav")
+                    play_audio_file(pepper_ip, RECORDING_PATH + "timing/unknown.wav", random.choice[NOT_UNDERSTAND_ANIM])
                     # get new response
                     input(f"Press Enter when you're ready to record 🎙️ ")
                     # need to add a check where there is no speech for 2 seconds
@@ -304,7 +323,7 @@ def trial_loop(stim_list, stim_path):
                     print(f'speaker said: {result}')
                     continue
             else:
-                play_audio_file(pepper_ip, RECORDING_PATH + "/incorrect/timing/nothing.wav")
+                play_audio_file(pepper_ip, RECORDING_PATH + "/incorrect/timing/nothing.wav", random.choice[NOT_UNDERSTAND_ANIM])
                 input(f"Press Enter when you're ready to record 🎙️ ")
 
                 recorder = Recorder()
@@ -318,11 +337,11 @@ def trial_loop(stim_list, stim_path):
 
 if __name__ == "__main__":
 
-    #app = qi.Application(sys.argv, url="tcps://" + pepper_ip + ":9503")
-    #logins = ("nao", "nao")
-    #factory = AuthenticatorFactory(*logins)
-    #app.session.setClientAuthenticatorFactory(factory)
-    #app.start()
+    app = qi.Application(sys.argv, url="tcps://" + pepper_ip + ":9503")
+    logins = ("nao", "nao")
+    factory = AuthenticatorFactory(*logins)
+    app.session.setClientAuthenticatorFactory(factory)
+    app.start()
 
     p = pyaudio.PyAudio()
 
@@ -348,18 +367,18 @@ if __name__ == "__main__":
 
     asr_model = whisper.load_model(ASR_MODEL)
 
-    ## start by playing the instructions and make sure the understood
-    #for file in sorted(os.listdir(INTRO_PATH)):
-    #    play_audio_file(pepper_ip, INTRO_PATH + file)
+    # start by playing the instructions and make sure the understood
+    for i, file in enumerate(sorted(os.listdir(INTRO_PATH))):
+        play_audio_file(pepper_ip, INTRO_PATH + file, INTO_ANIM_LIST[i])
     
     # practice set
     practice_path = RECORDING_PATH + "stimuli/practice/" + TRIAL
     practice_stim = os.listdir(practice_path)
     random.shuffle(practice_stim)
 
-    #trial_loop(practice_stim, practice_path)
+    trial_loop(practice_stim, practice_path)
     
-    play_audio_file(pepper_ip, RECORDING_PATH + "timing/endpractice.wav")
+    play_audio_file(pepper_ip, RECORDING_PATH + "timing/endpractice.wav", random.choice[TIMING_ANIM])
 
     # set blocks
     study_path = RECORDING_PATH + "stimuli/study/" + TRIAL + "/target/"
@@ -373,8 +392,8 @@ if __name__ == "__main__":
 
     trial_loop(block_A, study_path)
 
-    play_audio_file(pepper_ip, RECORDING_PATH + "timing/half.wav")
+    play_audio_file(pepper_ip, RECORDING_PATH + "timing/half.wav", random.choice[TIMING_ANIM])
 
     trial_loop(block_B, study_path)
 
-    play_audio_file(pepper_ip, RECORDING_PATH + "timing/finish.wav")
+    play_audio_file(pepper_ip, RECORDING_PATH + "timing/finish.wav", random.choice[TIMING_ANIM])
