@@ -126,39 +126,36 @@ def delete_remote_file(pepper_ip, remote_path, username='nao', password='nao'):
 def format_audio_file(input_file): #pepper only supports 16 bit audio files
     audio = AudioSegment.from_file(input_file)
     audio = audio.set_sample_width(2)
-    input_file = input_file.split(".")[0] + "_16b.wav"
+    #input_file = "." + input_file.split(".")[1] + "_16b.wav"
+    input_file = "." + input_file.split(".")[0] + "_16b.wav"
     audio.export(input_file, format="wav")
     return(input_file)
 
 def run_animation_on_pepper(animation_name = "top"):
     if animation_name == "head_image":
-        turn_head([0.0, 80.0])
-        #turn_head([80.0, 0.0])
+        turn_head(60.0)
     elif animation_name == "head_front":
-        turn_head([80.0, 0.0])
+        turn_head(0.0)
     else:
         # connect to pepper
-        animation_name = "top"
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(pepper_ip, username='nao', password='nao')
 
-        command = f"qicli call ALAnimationPlayer.run animations/Stand/{animation_name}'"
+        command = f"qicli call ALAnimationPlayer.runTag '{animation_name}'"
         stdin, stdout, stderr = ssh.exec_command(command)
         ssh.close()
 
-def turn_head(angles):
+def turn_head(angle):
     motion_service  = app.session.service("ALMotion")
 
     motion_service.setStiffnesses("Head", 1.0)
-    print(angles)
 
     # Simple command for the HeadYaw joint at 10% max speed
     names            = "HeadYaw"
-    angles           = [math.radians(angle) for angle in angles]
+    angles           = math.radians(angle)
     fractionMaxSpeed = 0.1
-    times = [1.0, 2.0]
-    motion_service.angleInterpolation(names,angles, times, True)
+    motion_service.setAngles(names,angles,fractionMaxSpeed)
 
     time.sleep(3.0)
     motion_service.setStiffnesses("Head", 0.0)
@@ -189,10 +186,18 @@ def play_audio_file(ip, file_path, motion = None):
     ## cleanup stuff.
     #wf.close()
     #stream.close()
+    print(file_path)
+    #remote_path = file_path.lstrip(".")
+    #remote_path = remote_path.split(".")[0]
+    #remote_path = remote_path + "_16b.wav"
+    #audio_player_service = app.session.service("ALAudioPlayer")
+    #remote_path = "/home/nao/bbexperiment/recording/" + remote_path
+    #print(remote_path)
+    ##remote_path = "/home/nao/" + file_path
+    #new_file = format_audio_file(file_path)
     file_name = file_path.split("/")[-1]
     file_name = file_name.split(".")[0]
-    file_name = file_name + "_16b.wav"
-    (print(file_name))
+    file_name = file_name + "_16.wav"
     audio_player_service = app.session.service("ALAudioPlayer")
     remote_path = "/home/nao/" + file_name
     new_file = format_audio_file(file_path)
@@ -277,7 +282,7 @@ class Recorder:
 def trial_loop(stim_list, stim_path):
     for stim in stim_list:
         play_audio_file(pepper_ip, stim_path + stim, "head_image")
-        #play_audio_file(pepper_ip, RECORDING_PATH + "/feedback/" + random.choice(feedback_responses), "head_front")
+        play_audio_file(pepper_ip, RECORDING_PATH + "/feedback/" + random.choice(feedback_responses), "head_front")
         input(f"Press Enter when you're ready to record 🎙️ ")
 
         recorder = Recorder()
@@ -299,6 +304,8 @@ def trial_loop(stim_list, stim_path):
             if result != '':
                 if result  == "yes":
                     not_understood = False
+                    
+                    #play_audio_file(pepper_ip, RECORDING_PATH + "correct/" + random.choice(correct_responses), random.choice[YES_ANIM])
                     play_audio_file(pepper_ip, RECORDING_PATH + "correct/" + random.choice(correct_responses), None)
                     input(f"Press Enter when you're ready to record 🎙️ ")
                     recorder = Recorder()
@@ -306,11 +313,13 @@ def trial_loop(stim_list, stim_path):
                     print("recorded")
                 elif result == "no":
                     not_understood = False
+                    #play_audio_file(pepper_ip, RECORDING_PATH + "incorrect/" + random.choice(incorrect_responses), random.choice[NO_ANIM])
                     play_audio_file(pepper_ip, RECORDING_PATH + "incorrect/" + random.choice(incorrect_responses), None)
                     input(f"Press Enter when you're ready to record 🎙️ ")
                     recorder = Recorder()
                     recorder.start_recording(RECORDING_PATH + "participant/participant_recordings/" + f"incorrect_{stim}")
                 else:
+                    #play_audio_file(pepper_ip, RECORDING_PATH + "timing/unknown.wav", random.choice[NOT_UNDERSTAND_ANIM])
                     play_audio_file(pepper_ip, RECORDING_PATH + "timing/unknown.wav", None)
                     # get new response
                     input(f"Press Enter when you're ready to record 🎙️ ")
@@ -327,6 +336,7 @@ def trial_loop(stim_list, stim_path):
                     print(f'speaker said: {result}')
                     continue
             else:
+                #play_audio_file(pepper_ip, RECORDING_PATH + "/incorrect/timing/nothing.wav", random.choice[NOT_UNDERSTAND_ANIM])
                 play_audio_file(pepper_ip, RECORDING_PATH + "/incorrect/timing/nothing.wav", None)
                 input(f"Press Enter when you're ready to record 🎙️ ")
 
@@ -373,7 +383,9 @@ if __name__ == "__main__":
 
     # start by playing the instructions and make sure the understood
     for i, file in enumerate(sorted(os.listdir(INTRO_PATH))):
-        play_audio_file(pepper_ip, INTRO_PATH + file, INTO_ANIM_LIST[i])
+        print(file)
+        #play_audio_file(pepper_ip, INTRO_PATH + file, INTO_ANIM_LIST[i])
+        play_audio_file(pepper_ip, INTRO_PATH + file, None)
     
     # practice set
     practice_path = RECORDING_PATH + "stimuli/practice/" + TRIAL
@@ -381,8 +393,10 @@ if __name__ == "__main__":
     random.shuffle(practice_stim)
 
     trial_loop(practice_stim, practice_path)
-    
+
     play_audio_file(pepper_ip, RECORDING_PATH + "timing/endpractice.wav", None)
+    
+    #play_audio_file(pepper_ip, RECORDING_PATH + "timing/endpractice.wav", random.choice[TIMING_ANIM])
 
     # set blocks
     study_path = RECORDING_PATH + "stimuli/study/" + TRIAL + "/target/"
@@ -396,8 +410,10 @@ if __name__ == "__main__":
 
     trial_loop(block_A, study_path)
 
+    #play_audio_file(pepper_ip, RECORDING_PATH + "timing/half.wav", random.choice[TIMING_ANIM])
     play_audio_file(pepper_ip, RECORDING_PATH + "timing/half.wav", None)
 
     trial_loop(block_B, study_path)
 
     play_audio_file(pepper_ip, RECORDING_PATH + "timing/finish.wav", None)
+    #play_audio_file(pepper_ip, RECORDING_PATH + "timing/finish.wav", random.choice[TIMING_ANIM])
