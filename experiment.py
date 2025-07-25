@@ -25,7 +25,8 @@ import requests
 import string
 import math
 
-pepper_ip = "207.23.199.53"  # Replace with Pepper's IP address
+pepper_ip = "207.23.199.69"  # Replace with Pepper's IP address
+# pepper_ip = "192.168.0.125"
 
 INTRO_PATH = "./intro_files/"
 RECORDING_PATH = "./recording/"
@@ -133,7 +134,7 @@ def format_audio_file(input_file): #pepper only supports 16 bit audio files
 def run_animation_on_pepper(animation_name = "top"):
     if animation_name == "head_image":
         turn_head([0.0, 80.0])
-        #turn_head([80.0, 0.0])
+        # turn_head([80.0, 0.0])
     elif animation_name == "head_front":
         turn_head([80.0, 0.0])
     else:
@@ -193,18 +194,21 @@ def play_audio_file(ip, file_path, motion = None):
     file_name = file_name.split(".")[0]
     file_name = file_name + "_16b.wav"
     (print(file_name))
+
+    run_animation_on_pepper('head_image')
     audio_player_service = app.session.service("ALAudioPlayer")
-    remote_path = "/home/nao/" + file_name
-    new_file = format_audio_file(file_path)
+    # remote_path = "/home/nao/" + file_name
+    # new_file = format_audio_file(file_path)
 
-    transfer_file_with_scp(ip, new_file, remote_path)
-    print(remote_path)
+    # transfer_file_with_scp(ip, new_file, remote_path)
+    # print(remote_path)
 
-    run_animation_on_pepper(motion)
+    # run_animation_on_pepper(motion)
 
-    audio_player_service.playFile(remote_path)
+    audio_player_service.playFile(file_path) # remote_path)
+    run_animation_on_pepper('head_front')
 
-    delete_remote_file(pepper_ip, remote_path)
+    # delete_remote_file(pepper_ip, remote_path)
 
 def wait_for_file_update(file_path):
     # Wait for the file to be created
@@ -277,6 +281,9 @@ class Recorder:
 def trial_loop(stim_list, stim_path):
     for stim in stim_list:
         play_audio_file(pepper_ip, stim_path + stim, "head_image")
+        play_audio_file(pepper_ip, stim_path + stim, "head_front")
+        # play_audio_file(pepper_ip, '/home/nao/01.wav', "head_image")
+        # play_audio_file(pepper_ip,'/home/nao/02.wav', "head_front")
         #play_audio_file(pepper_ip, RECORDING_PATH + "/feedback/" + random.choice(feedback_responses), "head_front")
         input(f"Press Enter when you're ready to record 🎙️ ")
 
@@ -372,17 +379,18 @@ if __name__ == "__main__":
     asr_model = whisper.load_model(ASR_MODEL)
 
     # start by playing the instructions and make sure the understood
-    for i, file in enumerate(sorted(os.listdir(INTRO_PATH))):
-        play_audio_file(pepper_ip, INTRO_PATH + file, INTO_ANIM_LIST[i])
+    # for i, file in enumerate(sorted(os.listdir(INTRO_PATH))):
+    #     play_audio_file(pepper_ip, INTRO_PATH + file, INTO_ANIM_LIST[i])
     
     # practice set
     practice_path = RECORDING_PATH + "stimuli/practice/" + TRIAL
     practice_stim = os.listdir(practice_path)
     random.shuffle(practice_stim)
 
-    trial_loop(practice_stim, practice_path)
+    # trial_loop(practice_stim, practice_path)
     
-    play_audio_file(pepper_ip, RECORDING_PATH + "timing/endpractice.wav", None)
+    # play_audio_file(pepper_ip, RECORDING_PATH + "timing/endpractice.wav", None)
+    play_audio_file(pepper_ip, '/home/nao/_16b.wav', None)
 
     # set blocks
     study_path = RECORDING_PATH + "stimuli/study/" + TRIAL + "/target/"
