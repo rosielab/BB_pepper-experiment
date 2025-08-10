@@ -79,57 +79,6 @@ class AuthenticatorFactory:
 
     def newAuthenticator(self):
         return Authenticator(self.username, self.password)
-    
-
-def transfer_file_with_scp(pepper_ip, local_file, remote_path, username='nao', password='nao'):
-    # try to transfer the file to Pepper using SCP, if it fails, try again
-    try:
-        # Connect to Pepper
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(pepper_ip, username=username, password=password)
-        
-        with SCPClient(ssh.get_transport()) as scp:
-            print(f"Transferring file '{local_file}' to '{remote_path}'...")
-            scp.put(local_file, remote_path)
-        ssh.close()
-
-    except Exception as e:
-        print(f"Failed to transfer file: {e}")
-        print("Retrying...")
-        time.sleep(0.25)
-        transfer_file_with_scp(pepper_ip, local_file, remote_path, username, password)
-
-
-def delete_remote_file(pepper_ip, remote_path, username='nao', password='nao'):
-    try:
-        # Connect to Pepper
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(pepper_ip, username=username, password=password)
-
-        # Run the command to delete the file
-        command = f"rm -f {remote_path}"
-        stdin, stdout, stderr = ssh.exec_command(command)
-        
-        # Check for errors
-        err = stderr.read().decode()
-        if err:
-            print(f"Failed to delete file: {err}")
-        else:
-            print(f"File '{remote_path}' deleted successfully.")
-
-        ssh.close()
-
-    except Exception as e:
-        print(f"Failed to delete file: {e}")
-
-def format_audio_file(input_file): #pepper only supports 16 bit audio files
-    audio = AudioSegment.from_file(input_file)
-    audio = audio.set_sample_width(2)
-    input_file = input_file.split(".")[0] + "_16b.wav"
-    audio.export(input_file, format="wav")
-    return(input_file)
 
 def run_animation_on_pepper(animation_name = "top"):
     if animation_name == "head_image":
@@ -152,7 +101,6 @@ def turn_head(angles):
     motion_service  = app.session.service("ALMotion")
 
     motion_service.setStiffnesses("Head", 1.0)
-    print(angles)
 
     # Simple command for the HeadYaw joint at 10% max speed
     names            = "HeadYaw"
@@ -165,69 +113,11 @@ def turn_head(angles):
     motion_service.setStiffnesses("Head", 0.0)
 
 def play_audio_file(ip, file_path, motion = None):
-    # open the file for reading.
-    #chunk = 10244
-    #print(file_path)
-    #wf = wave.open(file_path, 'rb')
-#
-    ## open stream based on the wave object which has been input.
-    #stream = p.open(format =
-    #               p.get_format_from_width(wf.getsampwidth()),
-    #               channels = wf.getnchannels(),
-    #               rate = wf.getframerate(),
-    #               output = True)
-#
-    ## read data (based on the chunk size)
-    #data = wf.readframes(chunk)
-#
-    ## play stream (looping from beginning of file to the end)
-    #while data:
-    #    # writing to the stream is what *actually* plays the sound.
-    #    stream.write(data)
-    #    data = wf.readframes(chunk)
-#
-#
-    ## cleanup stuff.
-    #wf.close()
-    #stream.close()
-    file_name = file_path.split("/")[-1]
-    file_name = file_name.split(".")[0]
-    file_name = file_name + "_16b.wav"
-    (print(file_name))
-
-    run_animation_on_pepper('head_image')
+    if motion:
+        run_animation_on_pepper(motion)
     audio_player_service = app.session.service("ALAudioPlayer")
-    # remote_path = "/home/nao/" + file_name
-    # new_file = format_audio_file(file_path)
-
-    # transfer_file_with_scp(ip, new_file, remote_path)
-    # print(remote_path)
-
-    # run_animation_on_pepper(motion)
 
     audio_player_service.playFile(file_path) # remote_path)
-    run_animation_on_pepper('head_front')
-
-    # delete_remote_file(pepper_ip, remote_path)
-
-def wait_for_file_update(file_path):
-    # Wait for the file to be created
-    while not os.path.exists(file_path):
-        print(f"Waiting for file '{file_path}' to be created...")
-        time.sleep(0.1)
-
-    # Wait for the file to update
-    while os.path.getmtime(file_path) == initial_modification_time:
-        initial_modification_time = os.path.getmtime(file_path)
-        print(f"Waiting for file '{file_path}' to update...")
-        time.sleep(0.1)
-
-    # Wait for the file to finish writing
-    last_size = 0
-    while os.path.getsize(file_path) == last_size:
-        last_size = os.path.getsize(file_path)
-        print(f"Waiting for file '{file_path}' to finish writing...")
-        time.sleep(0.2)
 
 class Recorder:
     def __init__(self):
@@ -281,10 +171,7 @@ class Recorder:
 def trial_loop(stim_list, stim_path):
     for stim in stim_list:
         play_audio_file(pepper_ip, stim_path + stim, "head_image")
-        play_audio_file(pepper_ip, stim_path + stim, "head_front")
-        # play_audio_file(pepper_ip, '/home/nao/01.wav', "head_image")
-        # play_audio_file(pepper_ip,'/home/nao/02.wav', "head_front")
-        #play_audio_file(pepper_ip, RECORDING_PATH + "/feedback/" + random.choice(feedback_responses), "head_front")
+        play_audio_file(pepper_ip, RECORDING_PATH + "/feedback/" + random.choice(feedback_responses), "head_front")
         input(f"Press Enter when you're ready to record 🎙️ ")
 
         recorder = Recorder()
@@ -356,21 +243,6 @@ if __name__ == "__main__":
 
     p = pyaudio.PyAudio()
 
-    #add chatting?
-    #full_prompt = f"{PROMPT}\n\nInput:\n{result}"
-    #
-    #response = requests.post(
-    #    "http://localhost:11434/api/generate",
-    #    json={
-    #        "model": LLM_MODEL,
-    #        "prompt": full_prompt,
-    #        "temperature": LLM_TEMPERATURE,
-    #        "stream": False
-    #    }
-    #) 
-
-    #response = response.json()["response"]
-    #print(response)
 
     correct_responses = os.listdir(RECORDING_PATH + '/correct/')
     incorrect_responses = os.listdir(RECORDING_PATH + '/incorrect/')
@@ -379,18 +251,17 @@ if __name__ == "__main__":
     asr_model = whisper.load_model(ASR_MODEL)
 
     # start by playing the instructions and make sure the understood
-    # for i, file in enumerate(sorted(os.listdir(INTRO_PATH))):
-    #     play_audio_file(pepper_ip, INTRO_PATH + file, INTO_ANIM_LIST[i])
+    for i, file in enumerate(sorted(os.listdir(INTRO_PATH))):
+         play_audio_file(pepper_ip, INTRO_PATH + file, INTO_ANIM_LIST[i])
     
     # practice set
     practice_path = RECORDING_PATH + "stimuli/practice/" + TRIAL
     practice_stim = os.listdir(practice_path)
     random.shuffle(practice_stim)
 
-    # trial_loop(practice_stim, practice_path)
+    trial_loop(practice_stim, practice_path)
     
-    # play_audio_file(pepper_ip, RECORDING_PATH + "timing/endpractice.wav", None)
-    play_audio_file(pepper_ip, '/home/nao/_16b.wav', None)
+    play_audio_file(pepper_ip, RECORDING_PATH + "timing/endpractice.wav", None)
 
     # set blocks
     study_path = RECORDING_PATH + "stimuli/study/" + TRIAL + "/target/"
