@@ -385,8 +385,9 @@ ws.onmessage = (event) => {
 };
 
 // Start with intro
+const BLOCK_ORDER = 'ABCD';
 const intro_pages = get_intro().pages;
-const stim_order = get_stimulus_list('ABCD');
+const stim_order = get_stimulus_list(BLOCK_ORDER);
 const practice_pages = get_practice();
 const study_pages = get_study();
 
