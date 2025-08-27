@@ -1,0 +1,33 @@
+id,folder,number,A,B
+target_DA_1,Target/DA,1,"She has to pull, Bart.",She has to pull Bart.
+target_DA_2,Target/DA,2,"He wants to hit, Gabe.",He wants to hit Gabe.
+target_DA_3,Target/DA,3,"They have to trip, Walt.",They have to trip Walt.
+target_DA_4,Target/DA,4,"They want to skip, Claire.",They want to skip Claire.
+target_DA_5,Target/DA,5,"She likes to see, Reese.",She likes to see Reese.
+target_DA_6,Target/DA,6,"I need to kick, Bruce.",I need to kick Bruce.
+target_DA_7,Target/DA,7,"She had to lift, Clyde.",She had to lift Clyde.
+target_DA_8,Target/DA,8,"She likes to draw, Kim.",She likes to draw Kim.
+target_DA_9,Target/DA,9,"She hates to miss, Lee.",She hates to miss Lee.
+target_DA_10,Target/DA,10,"He likes to fight, Bill.",He likes to fight Bill.
+target_list_1,Target/List,1,"The man got a child, a ball, and a game.",The man got a child a ball and a game.
+target_list_2,Target/List,2,"I emailed his mates, a chef, and a thief.",I emailed his mates a chef and a thief.
+target_list_3,Target/List,3,"The child baked my friends, a cake, and a loaf.",The child baked my friends a cake and a loaf.
+target_list_4,Target/List,4,"The lad gave the girl, a shirt, and a blouse.",The lad gave the girl a shirt and a blouse.
+target_list_5,Target/List,5,"The man showed his wife, his spy, and his guard.",The man showed his wife his spy and his guard.
+target_list_6,Target/List,6,"The girl saw her pals, Elise, and Marie.",The girl saw her pals Elise and Marie.
+target_list_7,Target/List,7,"We went to our cats, Yvonne, and Tyrone.",We went to our cats Yvonne and Tyrone.
+target_list_8,Target/List,8,"She followed her maids, Nicole, and Simone.",She followed her maids Nicole and Simone.
+target_list_9,Target/List,9,"The mom drove her kids, Eugene, and Adele.",The mom drove her kids Eugene and Adele.
+target_list_10,Target/List,10,"She painted her guests, Yvonne, and Louise.",She painted her guests Yvonne and Louise.
+filler_DA_1,Filler/Filler_DA,1,"I felt the heat, man.","I felt the hit, man."
+filler_DA_2,Filler/Filler_DA,2,"Just take the lead, Kate.","Just take the lid, Kate."
+filler_DA_3,Filler/Filler_DA,3,"They found a knot, Jill.","They found a nut, Jill."
+filler_DA_4,Filler/Filler_DA,4,"You made the cot, Nate.","You made the cut, Nate."
+filler_DA_5,Filler/Filler_DA,5,"The baby cooed, Zack.","The baby could, Zach."
+filler_list_1,Filler/Filler_List,1,"The box had a game, a doll, and a sheep.","The box had a game, a doll, and a ship."
+filler_list_2,Filler/Filler_List,2,"The yard had a bush, a tree, and a bean.","The yard had a bush, a tree, and a bin."
+filler_list_3,Filler/Filler_List,3,"The girl saw a beach, a boat, and a dock.","The girl saw a beach, a boat, and a duck."
+filler_list_4,Filler/Filler_List,4,"The boy drew a room, a chair, and a cop.","The boy drew a room, a chair, and a cup."
+filler_list_5,Filler/Filler_List,5,"The funding was planned, assessed, and then pooled.","The funding was planned, assessed, and then pulled."
+demo_3,Demo/Demo,3,"Don't, let me pay!",Don't let me pay!
+demo_2,Demo/Demo,2,"I'm sorry, I love you.",I'm sorry I love you.
