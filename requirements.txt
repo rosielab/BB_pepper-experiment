@@ -1,5 +1,6 @@
 scp
 qi
+websockets
 
 # --------- WHISPER LIVE --------- #
 
