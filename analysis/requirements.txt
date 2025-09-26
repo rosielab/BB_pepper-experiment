@@ -1,0 +1,4 @@
+#ffmpeg must be installed in the system
+openai-whisper
+jiwer
+g2p_en

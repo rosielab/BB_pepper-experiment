@@ -1,0 +1,7 @@
+filename,transcription
+test-ja-000.wav,"yes I see you"
+test-enm-000.wav,"Hey, can you hear me? I got something to say. I am also speaking English, but I am a male voice."
+test-dem-000.wav,"I am here to help you."
+test-fr-000.wav,"Bonjour, c'est la vous ? N'est-ce pas me faire savoir, si je peux vous idée."
+test-def-000.wav,"Hello! How is going? Your part should be done in a couple of days!"
+test-enf-000.wav,"Hey, nice to meet you, we are testing the TTS. I am the first voice you are going to hear."
