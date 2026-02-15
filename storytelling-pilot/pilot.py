@@ -6,6 +6,7 @@ import os
 import paramiko
 from pydub import AudioSegment
 from scp import SCPClient
+from pathlib import Path
 
 import pyaudio
 import wave
@@ -195,14 +196,20 @@ num_lines = sum(1 for line in open(script))
 print(f"Number of lines in script.txt: {num_lines}")
 
 out = storytelling_output_path.rstrip("/")
-inserts = {10, 31, 47}
+inserts = {2, 5, 10, 11, 14, 16, 19, 24, 26, 29, 31, 35, 36, 39, 41, 44, 47}
 
 for i in range(num_lines):
     play_and_mark_pepper(f"{out}/to_play-{i}.wav")
 
     if i+1 in inserts:
-        play_and_mark_pepper(f"{out}/to_play-q-{i+1}.wav")
-        play_and_mark_pepper(f"{out}/to_play-fb-{i+1}.wav")
+        filename = f"{out}/to_play-q-{i}.wav"
+        if Path(filename).exists():
+            play_and_mark_pepper(filename)
+            play_and_mark_pepper(f"{out}/to_play-fb-{i}.wav")
+        else:
+            play_and_mark_pepper(f"{out}/chime.wav")
+            time.sleep(2)
+
 
 def play_local_wav(path: str):
     wf = wave.open(path, 'rb')
@@ -230,8 +237,13 @@ def play_and_mark(path: str):
 #    play_and_mark(f"{out}/to_play-{i}.wav")
 #
 #    if i+1 in inserts:
-#        play_and_mark(f"{out}/to_play-q-{i+1}.wav")
-#        play_and_mark(f"{out}/to_play-fb-{i+1 }.wav")
+#         filename = f"{out}/to_play-q-{i+1}.wav"
+#         if Path(filename).exists():
+#            play_and_mark(filename)
+#            play_and_mark(f"{out}/to_play-fb-{i+1}.wav")
+#         else:
+#             play_and_mark(f"{out}/chime.wav")
+#             time.sleep(2)
     
 print("playing ending")
 

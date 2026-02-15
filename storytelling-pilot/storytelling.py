@@ -255,14 +255,28 @@ if __name__ == "__main__":
     vocoder, denoiser = load_vocoder(VOCODER_NAME, paths["vocoder"], tts_device)
     
     inserts = {
-        10:  "Where do you think the frog is?",
+        2: "chime",
+        5: "chime",
+        10: "Where do you think the frog is?",
+        11: "chime",
+        14: "chime",
+        16: "chime",
+        19: "chime",
+        24: "chime",
+        26: "chime",
+        29: "chime",
         31: "Have you ever seen a deer before?",
+        35: "chime",
+        36: "chime",
+        49: "chime",
+        41: "chime",
+        44: "chime",
         47: "Do you think the frog will be happy with his family?",
     }
 
     with open(SCRIPT_PATH, 'r') as file:
         for i, line in enumerate(file):
-            if i in inserts:
+            if i in inserts and inserts[i] != "chime":
                 spk = torch.tensor([12], device=tts_device, dtype=torch.long)
 
                 q_id = f"q-{i}"
@@ -342,7 +356,7 @@ if __name__ == "__main__":
 
         print(f'speaker said: {result}')
                 
-        with open("transcription.txt", "a") as transcripts:
+        with open("./results/transcription.txt", "a") as transcripts:
             transcripts.write(result + "\n")
                 
         #feedback
