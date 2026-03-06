@@ -10,8 +10,6 @@ import time
 
 from types import SimpleNamespace
 import json, torch
-from matcha.models.matcha_tts import MatchaTTS
-
 
 from matcha.hifigan.config import v1
 from matcha.hifigan.denoiser import Denoiser
@@ -20,8 +18,6 @@ from matcha.hifigan.models import Generator as HiFiGAN
 from matcha.models.matcha_tts import MatchaTTS
 from matcha.text import sequence_to_text, text_to_sequence
 from matcha.utils.utils import get_user_data_dir, intersperse, assert_model_downloaded
-
-from omegaconf.dictconfig import DictConfig
 
 import emoji
 
@@ -160,11 +156,6 @@ def to_ns(x):
 
 
 def load_matcha(weights_path, hparams_path, device):
-    import json
-    import torch
-    from types import SimpleNamespace
-    from matcha.models.matcha_tts import MatchaTTS
-
     def to_ns(x):
         if isinstance(x, dict):
             return SimpleNamespace(**{k: to_ns(v) for k, v in x.items()})
