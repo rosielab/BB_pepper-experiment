@@ -21,6 +21,8 @@ from matcha.models.matcha_tts import MatchaTTS
 from matcha.text import sequence_to_text, text_to_sequence
 from matcha.utils.utils import get_user_data_dir, intersperse, assert_model_downloaded
 
+from omegaconf.dictconfig import DictConfig
+
 import emoji
 
 import threading
@@ -158,27 +160,52 @@ def to_ns(x):
 
 
 def load_matcha(weights_path, hparams_path, device):
+    import json
+    import torch
+    from types import SimpleNamespace
+    from matcha.models.matcha_tts import MatchaTTS
+
+    def to_ns(x):
+        if isinstance(x, dict):
+            return SimpleNamespace(**{k: to_ns(v) for k, v in x.items()})
+        if isinstance(x, list):
+            return [to_ns(v) for v in x]
+        return x
+
+    # Load checkpoint (trusted)
+    ckpt = torch.load(weights_path, map_location=device, weights_only=False)
+
+    # Load JSON hparams as fallback
     with open(hparams_path) as f:
         hparams = json.load(f)
 
-    # patch required by your ckpt (out_size was None)
+    # If Lightning saved the exact training hparams, prefer those
+    if isinstance(ckpt, dict) and "hyper_parameters" in ckpt and isinstance(ckpt["hyper_parameters"], dict):
+        hparams = ckpt["hyper_parameters"]
+
+    # Some ckpts store nested dicts; Matcha expects dot access for encoder/cfm
     if hparams.get("out_size") in (None, "None"):
         hparams["out_size"] = hparams["n_feats"]
 
-    # Wrap ONLY the parts Matcha accesses with dots
     if isinstance(hparams.get("encoder"), dict):
         hparams["encoder"] = to_ns(hparams["encoder"])
-
     if isinstance(hparams.get("cfm"), dict):
         hparams["cfm"] = to_ns(hparams["cfm"])
 
     model = MatchaTTS(**hparams)
 
-    state = torch.load(weights_path, map_location=device, weights_only=True)
-    model.load_state_dict(state, strict=True)
+    # Get the actual weights
+    state_dict = ckpt["state_dict"] if isinstance(ckpt, dict) and "state_dict" in ckpt else ckpt
+
+    # Strip common prefixes if present
+    for prefix in ("model.", "tts_model.", "net.", "generator."):
+        if any(k.startswith(prefix) for k in state_dict.keys()):
+            state_dict = {k[len(prefix):]: v for k, v in state_dict.items()}
+            break
+
+    model.load_state_dict(state_dict, strict=True)
     model.to(device).eval()
     return model
-
 
 def load_hifigan(checkpoint_path, device):
     h = AttrDict(v1)
@@ -368,7 +395,7 @@ if __name__ == "__main__":
         
         spk = torch.tensor([107], device=tts_device, dtype=torch.long)
         
-        play_only_synthesis(
-            tts_device, tts_model, vocoder, denoiser,
-            "Thank you so much for taking the time to listen to my story!", spk, LANGUAGE, "final"
-        )
+play_only_synthesis(
+    tts_device, tts_model, vocoder, denoiser,
+    "Thank you so much for taking the time to listen to my story!", spk, LANGUAGE, "final"
+)
