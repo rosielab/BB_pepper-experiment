@@ -18,7 +18,7 @@ RUN_META_PATH = BASE_DIR / ".current_run.json"
 ARCHIVE_ROOT = BASE_DIR / "overallresults"
 demo = "storytelling" # Replace with the name of the demo you want to run
 pepper_ip = "192.168.0.120"  # Replace with Pepper's IP address
-script = "/home/rosie/Documents/BBPepper/BB_pepper-experiment/storytelling-pilot/frog_script_eye_roll.txt"
+script = "/home/rosie/Documents/BBPepper/BB_pepper-experiment/storytelling-pilot/frog_script_slightly_smiling.txt"
 storytelling_output_path =  "./outputs/"
 
 class Authenticator:
@@ -292,7 +292,3 @@ def play_and_mark(path: str):
 print("playing ending")
 
 play_and_mark_pepper("{}/to_play-final.wav".format(out))
-
-print("[DEBUG] Closing connexion.")
-app.stop()
-print("[DEBUG] Connection closed.")
