@@ -34,6 +34,8 @@ import shutil
 from datetime import datetime
 import whisper
 
+from inserts_mapping import inserts_dict as inserts
+
 BASE_DIR = Path(__file__).resolve().parent
 RUN_META_PATH = BASE_DIR / ".current_run.json"
 ARCHIVE_ROOT = BASE_DIR / "overallresults"
@@ -343,28 +345,11 @@ if __name__ == "__main__":
         tts_model = load_matcha(paths["matcha"], HPARAMS_PATH, tts_device)
         vocoder, denoiser = load_vocoder(VOCODER_NAME, paths["vocoder"], tts_device)
         
-        inserts = {
-            2: "chime",
-            5: "chime",
-            10: "Where do you think the frog is?",
-            11: "chime",
-            14: "chime",
-            16: "chime",
-            19: "chime",
-            24: "chime",
-            26: "chime",
-            29: "chime",
-            31: "Have you ever seen a deer before?",
-            35: "chime",
-            36: "chime",
-            49: "chime",
-            41: "chime",
-            44: "chime",
-            47: "Do you think the frog will be happy with his family?",
-        }
+
 
         with open(SCRIPT_PATH, 'r') as file:
             for i, line in enumerate(file):
+                print("Insert", i)
                 if i in inserts and inserts[i] != "chime":
                     spk = torch.tensor([12], device=tts_device, dtype=torch.long)
 
@@ -382,6 +367,7 @@ if __name__ == "__main__":
                     os.environ["ALSA_PCM_CARD"] = "0"
                     # wait for response to generate the next (record using ALSA directly; avoids PyAudio crash)
                     print("Now recording 🎤 (Press Enter to stop)")
+
                     import subprocess, signal
                     rec_cmd = ["arecord", "-D", "plughw:0,0", "-f", "S16_LE", "-r", "16000", "-c", "1", f"./results/output-{i}.wav"]
                     proc = subprocess.Popen(rec_cmd)
@@ -404,10 +390,36 @@ if __name__ == "__main__":
                     
                     #feedback
                     fb_id = f"fb-{i}"
-                    play_only_synthesis(
-                        tts_device, tts_model, vocoder, denoiser,
-                        "Oh, very interesting.", spk, LANGUAGE, fb_id
-                    )
+                    if inserts[i] == "Where do you think the frog is?":
+                        play_only_synthesis(
+                            tts_device, tts_model, vocoder, denoiser,
+                            "Let's go see!", spk, LANGUAGE, fb_id
+                        )
+                    if inserts[i] == "Have you ever seen a deer before?":
+                        play_only_synthesis(
+                            tts_device, tts_model, vocoder, denoiser,
+                            "That's interesting", spk, LANGUAGE, fb_id
+                        )
+                    if inserts[i] == "Let's call for the frog together":
+                        play_only_synthesis(
+                            tts_device, tts_model, vocoder, denoiser,
+                            "Sounds great!", spk, LANGUAGE, fb_id
+                        )
+                    if inserts[i] == "What do you think is in the hollow":
+                        play_only_synthesis(
+                            tts_device, tts_model, vocoder, denoiser,
+                            "It's an owl!", spk, LANGUAGE, fb_id
+                        )
+                    if inserts[i] == "What sounds do you think the frog makes?":
+                        play_only_synthesis(
+                            tts_device, tts_model, vocoder, denoiser,
+                            "I love it!", spk, LANGUAGE, fb_id
+                        ),
+                    if inserts[i] == "What do you think they heard?":
+                        play_only_synthesis(
+                            tts_device, tts_model, vocoder, denoiser,
+                            "Cool!", spk, LANGUAGE, fb_id
+                        )
 
                     fb_wav = f"{WAV_PATH}/to_play-{fb_id}.wav"
                     wait_done(fb_wav)
@@ -469,7 +481,7 @@ if __name__ == "__main__":
             fb_id = f"fb-{i+1}"
             play_only_synthesis(
                 tts_device, tts_model, vocoder, denoiser,
-                "Oh, very interesting.", spk, LANGUAGE, fb_id
+                "Great answer!", spk, LANGUAGE, fb_id
             )
             
             spk = torch.tensor([107], device=tts_device, dtype=torch.long)

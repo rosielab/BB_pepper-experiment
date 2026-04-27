@@ -13,6 +13,8 @@ import wave
 import json
 from datetime import datetime
 
+from inserts_mapping import inserts_set as inserts
+
 BASE_DIR = Path(__file__).resolve().parent
 RUN_META_PATH = BASE_DIR / ".current_run.json"
 ARCHIVE_ROOT = BASE_DIR / "overallresults"
@@ -240,9 +242,10 @@ num_lines = sum(1 for line in open(script))
 print("Number of lines in script.txt: {}".format(num_lines))
 
 out = storytelling_output_path.rstrip("/")
-inserts = {2, 5, 10, 11, 14, 16, 19, 24, 26, 29, 31, 35, 36, 39, 41, 44, 47}
+# inserts = {2, 6, 10, 11, 14, 15, 16, 19, 23, 24, 26, 29, 31, 35, 36, 39, 40, 41, 43, 44, 47}
 
 for i in range(num_lines):
+    print("Playing Insert",i)
     play_and_mark_pepper("{}/to_play-{}.wav".format(out, i))
 
     if i+1 in inserts:
@@ -252,7 +255,8 @@ for i in range(num_lines):
             play_and_mark_pepper(f"{out}/to_play-fb-{i+1}.wav")
         else:
             play_and_mark_pepper(f"{out}/chime.wav")
-            time.sleep(2)
+            # time.sleep(2)
+        # time.sleep(3)
 
 
 def play_local_wav(path: str):
@@ -290,6 +294,7 @@ def play_and_mark(path: str):
 #             time.sleep(2)
     
 print("playing ending")
+# app.session.service("ALTextToSpeech").say("Thank you for listening")
 
 play_and_mark_pepper("{}/to_play-final.wav".format(out))
 
