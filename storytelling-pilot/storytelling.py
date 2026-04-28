@@ -346,7 +346,6 @@ if __name__ == "__main__":
         vocoder, denoiser = load_vocoder(VOCODER_NAME, paths["vocoder"], tts_device)
         
 
-
         with open(SCRIPT_PATH, 'r') as file:
             for i, line in enumerate(file):
                 print("Insert", i)
