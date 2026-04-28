@@ -345,6 +345,23 @@ if __name__ == "__main__":
         tts_model = load_matcha(paths["matcha"], HPARAMS_PATH, tts_device)
         vocoder, denoiser = load_vocoder(VOCODER_NAME, paths["vocoder"], tts_device)
         
+        participant_name = input("Enter participant name: ")
+        
+        spk_greeting = torch.tensor([12], device=tts_device, dtype=torch.long)
+        greeting_id = "greeting"
+        
+        print(f"Synthesizing greeting for {participant_name}...")
+        play_only_synthesis(
+            tts_device, tts_model, vocoder, denoiser,
+            f"Hi {participant_name}. Nice to meet you!", spk_greeting, LANGUAGE, greeting_id
+        )
+        
+        greeting_wav = f"{WAV_PATH}/to_play-{greeting_id}.wav"
+        print("Waiting for greeting to play...")
+        wait_done(greeting_wav)
+
+        print("\nReady to start!")
+        input("Press the [Enter] key to begin the story...")
 
         with open(SCRIPT_PATH, 'r') as file:
             for i, line in enumerate(file):
