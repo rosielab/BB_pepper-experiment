@@ -504,7 +504,7 @@ if __name__ == "__main__":
             
         play_only_synthesis(
             tts_device, tts_model, vocoder, denoiser,
-            "Thank you so much for taking the time to listen to my story!", spk, LANGUAGE, "final"
+            f"Thank you so much for taking the time to listen to my story {participant_name}!", spk, LANGUAGE, "final"
         )
     except KeyboardInterrupt:
         print("\n[INTERRUPT] Ctrl+C received — archiving what exists so far...")
