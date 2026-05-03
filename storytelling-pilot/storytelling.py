@@ -43,13 +43,13 @@ WORK_RESULTS = BASE_DIR / "results"
 WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 
-VOICE = 'emoji'
+VOICE = 'chanel'
 SCRIPT_PATH = "/home/rosie/Documents/BBPepper/BB_pepper-experiment/storytelling-pilot/frog_script_eye_roll.txt"
 WAV_PATH = str(WORK_OUTPUTS)
 ############################ TTS PARAMETERS ############################################################################
-TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "matcha_state_dict.pt")
-#TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "emoji-hri-paige-inference.ckpt")
-HPARAMS_PATH = os.path.join(os.path.dirname(__file__), "matcha_hparams.json")
+#TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "matcha_state_dict.pt")
+#HPARAMS_PATH = os.path.join(os.path.dirname(__file__), "matcha_hparams.json")
+TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "ADD CKPT PATH HERE")
 SPEAKING_RATE = 0.9
 STEPS = 10
 LANGUAGE = "en"
@@ -62,19 +62,38 @@ VOCODER_URLS = {
 }
 
 #maps the emojis used by the LLM to the speaker numbers from the Matcha-TTS checkpoint
-emoji_mapping = {
-    '😍' : 107,
-    '😡' : 58,
-    '😎' : 79,
-    '😭' : 103,
-    '🙄' : 66,
-    '😁' : 18,
-    '🙂' : 12,
-    '🤣' : 15,
-    '😮' : 54,
-    '😅' : 22,
-    '🤔' : 17
-}
+if VOICE == 'emoji':
+    emoji_mapping = {
+        '😍' : 107,
+        '😡' : 58,
+        '😎' : 79,
+        '😭' : 103,
+        '🙄' : 66,
+        '😁' : 18,
+        '🙂' : 12,
+        '🤣' : 15,
+        '😮' : 54,
+        '😅' : 22,
+        '🤔' : 17
+    }
+if VOICE == 'olivia':
+    # for Olivia
+    emoji_mapping = {
+        '😡' : 4,
+        '😭' : 3,
+        '😁' : 2,
+        '🙂' : 1,
+        '😮' : 0,
+    }
+# for Chanel
+if VOICE == 'chanel':
+    emoji_mapping = {
+        '😡' : 9,
+        '😭' : 8,
+        '😁' : 7,
+        '🙂' : 6,
+        '😮' : 5,
+    }
 
 
 ####################### ASR SETUP ######################################################################################
@@ -168,71 +187,32 @@ def to_ns(x):
     return x
 
 
-def load_matcha(weights_path, hparams_path, device):
-    with open(hparams_path) as f:
-        hparams = json.load(f)
-
-    # patch required by your ckpt (out_size was None)
-    if hparams.get("out_size") in (None, "None"):
-        hparams["out_size"] = hparams["n_feats"]
-
-    # Wrap ONLY the parts Matcha accesses with dots
-    if isinstance(hparams.get("encoder"), dict):
-        hparams["encoder"] = to_ns(hparams["encoder"])
-
-    if isinstance(hparams.get("cfm"), dict):
-        hparams["cfm"] = to_ns(hparams["cfm"])
-
-    model = MatchaTTS(**hparams)
-
-    state = torch.load(weights_path, map_location=device, weights_only=True)
-    model.load_state_dict(state, strict=True)
-    model.to(device).eval()
-    return model
-
 #def load_matcha(weights_path, hparams_path, device):
+#   with open(hparams_path) as f:
+#       hparams = json.load(f)
 #
-#    def to_ns(x):
-#        if isinstance(x, dict):
-#            return SimpleNamespace(**{k: to_ns(v) for k, v in x.items()})
-#        if isinstance(x, list):
-#            return [to_ns(v) for v in x]
-#        return x
+#   # patch required by your ckpt (out_size was None)
+#   if hparams.get("out_size") in (None, "None"):
+#       hparams["out_size"] = hparams["n_feats"]
 #
-#    # Load checkpoint (trusted)
-#    ckpt = torch.load(weights_path, map_location=device, weights_only=False)
+#   # Wrap ONLY the parts Matcha accesses with dots
+#   if isinstance(hparams.get("encoder"), dict):
+#       hparams["encoder"] = to_ns(hparams["encoder"])
 #
-#    # Load JSON hparams as fallback
-#    with open(hparams_path) as f:
-#        hparams = json.load(f)
+#   if isinstance(hparams.get("cfm"), dict):
+#       hparams["cfm"] = to_ns(hparams["cfm"])
 #
-#    # If Lightning saved the exact training hparams, prefer those
-#    if isinstance(ckpt, dict) and "hyper_parameters" in ckpt and isinstance(ckpt["hyper_parameters"], dict):
-#        hparams = ckpt["hyper_parameters"]
+#   model = MatchaTTS(**hparams)
 #
-#    # Some ckpts store nested dicts; Matcha expects dot access for encoder/cfm
-#    if hparams.get("out_size") in (None, "None"):
-#        hparams["out_size"] = hparams["n_feats"]
-#
-#    if isinstance(hparams.get("encoder"), dict):
-#        hparams["encoder"] = to_ns(hparams["encoder"])
-#    if isinstance(hparams.get("cfm"), dict):
-#        hparams["cfm"] = to_ns(hparams["cfm"])
-#
-#    model = MatchaTTS(**hparams)
-#
-#    # Get the actual weights
-#    state_dict = ckpt["state_dict"] if isinstance(ckpt, dict) and "state_dict" in ckpt else ckpt
-#
-#    # Strip common prefixes if present
-#    for prefix in ("model.", "tts_model.", "net.", "generator."):
-#        if any(k.startswith(prefix) for k in state_dict.keys()):
-#            state_dict = {k[len(prefix):]: v for k, v in state_dict.items()}
-#            break
-#
-#    model.load_state_dict(state_dict, strict=True)
-#    model.to(device).eval()
-#    return model
+#   state = torch.load(weights_path, map_location=device, weights_only=True)
+#   model.load_state_dict(state, strict=True)
+#   model.to(device).eval()
+#   return model
+
+def load_matcha(checkpoint_path, device):
+    model = MatchaTTS.load_from_checkpoint(checkpoint_path, map_location=device)
+    _ = model.eval()
+    return model
 
 
 def load_hifigan(checkpoint_path, device):
@@ -339,8 +319,9 @@ if __name__ == "__main__":
         asr_model = whisper.load_model(ASR_MODEL)
 
         save_dir = get_user_data_dir() 
-    
-        tts_model = load_matcha(paths["matcha"], HPARAMS_PATH, tts_device)
+
+        #tts_model = load_matcha(paths["matcha"], HPARAMS_PATH, tts_device)
+        tts_model = load_matcha(paths["matcha"], tts_device)
         vocoder, denoiser = load_vocoder(VOCODER_NAME, paths["vocoder"], tts_device)
         
         inserts = {
@@ -366,7 +347,12 @@ if __name__ == "__main__":
         with open(SCRIPT_PATH, 'r') as file:
             for i, line in enumerate(file):
                 if i in inserts and inserts[i] != "chime":
-                    spk = torch.tensor([12], device=tts_device, dtype=torch.long)
+                    if VOICE == 'emoji':
+                        spk = torch.tensor([12], device=tts_device, dtype=torch.long)
+                    elif VOICE == 'olivia':
+                        spk = torch.tensor([1], device=tts_device, dtype=torch.long)
+                    elif VOICE == 'chanel':
+                        spk = torch.tensor([6], device=tts_device, dtype=torch.long)
 
                     q_id = f"q-{i}"
                     #print(f"[GEN] line {i}: {clean_line[:60]}{'...' if len(clean_line) > 60 else ''}")
@@ -416,16 +402,16 @@ if __name__ == "__main__":
                 clean_line = line.strip()
                 if VOICE == 'emoji':
                     spk = torch.tensor([12], device=tts_device, dtype=torch.long)
-                    for emote in emoji_mapping:
-                        if emote in clean_line:
-                            spk = torch.tensor([emoji_mapping[emote]], device=tts_device, dtype=torch.long)
-                            break
-                elif VOICE == 'base':
+                elif VOICE == 'olivia':
                     spk = torch.tensor([1], device=tts_device, dtype=torch.long)
-                elif VOICE == 'default':
-                    spk = torch.tensor([12], device=tts_device, dtype=torch.long)
+                elif VOICE == 'chanel':
+                    spk = torch.tensor([6], device=tts_device, dtype=torch.long)
                 else:
                     print("hmmm wrong voice")
+                for emote in emoji_mapping:
+                    if emote in clean_line:
+                        spk = torch.tensor([emoji_mapping[emote]], device=tts_device, dtype=torch.long)
+                        break
                 clean_line = emoji.replace_emoji(clean_line, '')
                 #matcha cannot handle brackets
                 clean_line = clean_line.replace(')', '')
@@ -434,7 +420,12 @@ if __name__ == "__main__":
 
 
         if i+1 in inserts:
-            spk = torch.tensor([12], device=tts_device, dtype=torch.long)
+            if VOICE == 'emoji':
+                spk = torch.tensor([12], device=tts_device, dtype=torch.long)
+            elif VOICE == 'olivia':
+                spk = torch.tensor([1], device=tts_device, dtype=torch.long)
+            elif VOICE == 'chanel':
+                spk = torch.tensor([6], device=tts_device, dtype=torch.long)
 
             q_id = f"q-{i+1}"
             play_only_synthesis(tts_device, tts_model, vocoder, denoiser, inserts[i+1], spk, LANGUAGE, q_id)
