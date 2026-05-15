@@ -1,0 +1,50 @@
+{
+  "use_precomputed_durations": false,
+  "encoder": {
+    "encoder_type": "RoPE Encoder",
+    "encoder_params": {
+      "n_feats": 80,
+      "n_channels": 192,
+      "filter_channels": 768,
+      "filter_channels_dp": 256,
+      "n_heads": 2,
+      "n_layers": 6,
+      "kernel_size": 3,
+      "p_dropout": 0.1,
+      "spk_emb_dim": 64,
+      "n_spks": 1,
+      "prenet": true
+    },
+    "duration_predictor_params": {
+      "filter_channels_dp": 256,
+      "kernel_size": 3,
+      "p_dropout": 0.1
+    }
+  },
+  "decoder": {
+    "channels": [
+      256,
+      256
+    ],
+    "dropout": 0.05,
+    "attention_head_dim": 64,
+    "n_blocks": 1,
+    "num_mid_blocks": 2,
+    "num_heads": 2,
+    "act_fn": "snakebeta"
+  },
+  "spk_emb_dim": 64,
+  "n_feats": 80,
+  "prior_loss": true,
+  "n_vocab": 178,
+  "n_spks": 109,
+  "data_statistics": {
+    "mel_mean": -7.035977363586426,
+    "mel_std": 2.5847718715667725
+  },
+  "cfm": {
+    "name": "CFM",
+    "solver": "euler",
+    "sigma_min": 0.0001
+  }
+}
