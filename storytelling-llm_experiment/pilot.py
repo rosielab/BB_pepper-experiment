@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 from datetime import datetime
 
+import shutil
 import pyaudio
 import wave
 import json
@@ -26,7 +27,7 @@ WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 demo = "storytelling" # Replace with the name of the demo you want to run
 pepper_ip = "192.168.0.120"  # Replace with Pepper's IP address
-script = "/home/paige/Documents/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji.txt"
+script = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji.txt"
 storytelling_output_path =  "./outputs/"
 
 class Authenticator:
@@ -62,6 +63,8 @@ def archive_and_clean():
     res_dst = run_dir / "results"
     out_dst.mkdir(parents=True, exist_ok=True)
     res_dst.mkdir(parents=True, exist_ok=True)
+
+    
 
     # Move working files into archive
     # Move working files into archive (but KEEP chime.wav in outputs/)
@@ -120,10 +123,16 @@ def delete_remote_file(pepper_ip, remote_path, username='nao', password='nao'):
     except Exception as e:
         print("Failed to delete file: {}".format(e))
 
-def format_audio_file(input_file): #pepper only supports 16 bit audio files
-    audio = AudioSegment.from_file(input_file +".wav")
+# def format_audio_file(input_file): #pepper only supports 16 bit audio files
+#     audio = AudioSegment.from_file(input_file +".wav")
+#     audio = audio.set_sample_width(2)
+#     audio.export(input_file+"_16b.wav", format="wav")
+
+def format_audio_file(input_file):  # pepper only supports 16 bit audio files
+    audio = AudioSegment.from_file(input_file + ".wav")
     audio = audio.set_sample_width(2)
-    audio.export(input_file+"_16b.wav", format="wav")
+    audio = audio + 15 # boost by +10 dB (try 6–15)
+    audio.export(input_file + "_16b.wav", format="wav")
 
 def run_animation_on_pepper(animation_name = "top"):
     # connect to pepper
@@ -270,16 +279,21 @@ RUN_META_PATH.write_text(json.dumps({#for i in range(num_lines):
 print(f"[RUN] archiving to: {run_dir}")
 
 # Replace the URL with the IP of Pepper, get the ip from pressing the power button once
-#app = qi.Application(sys.argv, url="tcps://" + pepper_ip + ":9503")
-#logins = ("nao", "nao")
-#factory = AuthenticatorFactory(*logins)
-#app.session.setClientAuthenticatorFactory(factory)
-#
-#app.start()
-#print("[DEBUG] qi connected. session isConnected={}".format(app.session.isConnected()))
-#print("[DEBUG] testing ALTextToSpeech...")
-#app.session.service("ALTextToSpeech").say("Hello. I am connected.")
-#print("[DEBUG] TTS test returned.")
+app = qi.Application(sys.argv, url="tcps://" + pepper_ip + ":9503")
+logins = ("nao", "nao")
+factory = AuthenticatorFactory(*logins)
+app.session.setClientAuthenticatorFactory(factory)
+
+app.start()
+
+audio_device = app.session.service("ALAudioDevice")
+audio_device.setOutputVolume(100)
+print(f"[VOLUME] Pepper output volume: {audio_device.getOutputVolume()}")
+
+print("[DEBUG] qi connected. session isConnected={}".format(app.session.isConnected()))
+print("[DEBUG] testing ALTextToSpeech...")
+# app.session.service("ALTextToSpeech").say("Hello. I am connected.")
+print("[DEBUG] TTS test returned.")
 
 
 p = pyaudio.PyAudio()
@@ -325,6 +339,27 @@ def play_and_mark(path: str):
     play_local_wav(path)
     mark_done(path)
 
+# for i in range(num_lines):
+#     print(f"trying to play line : {i}")
+#     if i in inserts:
+#         q_file = f"{out}/to_play-q-{i}.wav"
+#         fb_file = f"{out}/to_play-fb-{i}.wav"
+#         answer_file = f"{out}/to_play-answer-{i}.wav"
+#         if Path(q_file).exists():
+#             play_and_mark(q_file)
+#             play_and_mark(fb_file)
+#             play_and_mark(answer_file)
+#         continue
+
+#     play_and_mark(f"{out}/to_play-{i}.wav")
+
+# print("playing ending")
+
+# play_and_mark("{}/to_play-final.wav".format(out))
+
+# greeting
+play_and_mark_pepper("{}/to_play-greeting.wav".format(out))
+
 for i in range(num_lines):
     print(f"trying to play line : {i}")
     if i in inserts:
@@ -332,18 +367,26 @@ for i in range(num_lines):
         fb_file = f"{out}/to_play-fb-{i}.wav"
         answer_file = f"{out}/to_play-answer-{i}.wav"
         if Path(q_file).exists():
-            play_and_mark(q_file)
-            play_and_mark(fb_file)
-            play_and_mark(answer_file)
+            play_and_mark_pepper(q_file)
+            play_and_mark_pepper(fb_file)
+            play_and_mark_pepper(answer_file)
         continue
 
-    play_and_mark(f"{out}/to_play-{i}.wav")
+    play_and_mark_pepper(f"{out}/to_play-{i}.wav")
 
 print("playing ending")
 
-play_and_mark("{}/to_play-final.wav".format(out))
+play_and_mark_pepper("{}/to_play-final.wav".format(out))
 
 archive_and_clean()
+try:
+    # shutil.rmtree(ARCHIVE_ROOT)
+    # shutil.rmtree(WORK_RESULTS)
+    shutil.rmtree(WORK_OUTPUTS)
+except Exception as e:
+    print(f"Could not delete due to: {e}")
+
+
 print("[DONE] Archived + cleaned working folders.")
 
 print("[DEBUG] Closing connexion.")

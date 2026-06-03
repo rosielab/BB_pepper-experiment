@@ -60,12 +60,12 @@ WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 
 VOICE = 'chanel'
-SCRIPT_PATH = "/home/paige/Documents/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji.txt"
+SCRIPT_PATH = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji.txt"
 WAV_PATH = str(WORK_OUTPUTS)
 ############################ TTS PARAMETERS ############################################################################
 #TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "matcha_state_dict.pt")
 #HPARAMS_PATH = os.path.join(os.path.dirname(__file__), "matcha_hparams.json")
-TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "last.ckpt")
+TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "emojivoice-chanel-olivia-latest.ckpt")
 SPEAKING_RATE = 0.9
 STEPS = 10
 LANGUAGE = "en"
@@ -264,6 +264,24 @@ def save_to_folder(filename: str, output: dict, folder: str):
     folder.mkdir(exist_ok=True, parents=True)
     sf.write(folder / f"to_play-{filename}.wav", output["waveform"], 22050, "PCM_24")
 
+# def synthesis(device, model, vocoder, denoiser, text, spk, language, i):
+#     text = text.strip()
+#     text_processed = process_text(text, device, language)
+
+#     output = model.synthesise(
+#         text_processed["x"],
+#         text_processed["x_lengths"],
+#         n_timesteps=STEPS,
+#         temperature=TTS_TEMPERATURE,
+#         spks=spk,
+#         length_scale=SPEAKING_RATE,
+#     )
+#     output["waveform"] = to_waveform(output["mel"], vocoder, denoiser)
+
+#     output["waveform"] = np.clip(output["waveform"], -1.0, 1.0)
+
+#     save_to_folder(i, output, WAV_PATH)
+
 def synthesis(device, model, vocoder, denoiser, text, spk, language, i):
     text = text.strip()
     text_processed = process_text(text, device, language)
@@ -278,7 +296,12 @@ def synthesis(device, model, vocoder, denoiser, text, spk, language, i):
     )
     output["waveform"] = to_waveform(output["mel"], vocoder, denoiser)
 
-    output["waveform"] = np.clip(output["waveform"], -1.0, 1.0)
+    # ── Boost volume ──────────────────────────────────────────────
+    GAIN = 0.5  # try 1.5–4.0; higher = louder (clips if > 1 after scaling)
+    output["waveform"] = np.clip(output["waveform"] * GAIN, -1.0, 1.0)
+    peak = float(np.abs(output["waveform"]).max())
+    print(f"[AUDIO] peak amplitude after gain: {peak:.4f}")  # should be close to 1.0
+    # ─────────────────────────────────────────────────────────────
 
     save_to_folder(i, output, WAV_PATH)
 
@@ -326,12 +349,23 @@ if __name__ == "__main__":
 
             messages = []
             
-            def is_silent_wav(path, rms_threshold=250):
+            def is_silent_wav(path, rms_threshold=50):
                 with wave.open(path, "rb") as wf:
                     frames = wf.readframes(wf.getnframes())
                     sample_width = wf.getsampwidth()
                     rms = audioop.rms(frames, sample_width)
                 return rms < rms_threshold
+            
+            # greeting
+            participantName = input("Enter their name: ")
+            synthesis(
+                tts_device, tts_model, vocoder, denoiser,
+                f"Hi {participantName}, nice to meet you! I'm Pepper!", torch.tensor([7], device=tts_device, dtype=torch.long), LANGUAGE, "greeting"
+            )
+            q_wav = f"{WAV_PATH}/to_play-greeting.wav"
+            wait_done(q_wav)
+            moving_on = input("Press enter to continue")
+
 
             for i, line in enumerate(file):
                 if i in inserts:
@@ -362,9 +396,36 @@ if __name__ == "__main__":
                     print("Now recording 🎤 (Press Enter to stop)")
                     import subprocess, signal
                     #rec_cmd = ["arecord", "-D", "plughw:0,0", "-f", "S16_LE", "-r", "16000", "-c", "1", f"./results/output-{i}.wav"]
+                    # rec_cmd = [
+                    #     "arecord",
+                    #     "-D", "plughw:1,0",
+                    #     "-f", "S16_LE",
+                    #     "-r", "16000",
+                    #     "-c", "1",
+                    #     f"./results/output-{i}.wav"
+                    # ]
+
+
+                    def find_alsa_device(card_name: str) -> str:
+                        """Find ALSA device string by card name substring."""
+                        result = subprocess.run(["arecord", "-l"], capture_output=True, text=True)
+                        for line in result.stdout.splitlines():
+                            if card_name in line:
+                                match = re.search(r"card (\d+):.*device (\d+):", line)
+                                if match:
+                                    card, device = match.groups()
+                                    return f"plughw:{card},{device}"
+                        raise RuntimeError(f"ALSA device '{card_name}' not found")
+                    
+                    try:
+                        device = find_alsa_device("DJI MIC MINI")
+                    except RuntimeError:
+                        device = "plughw:2,0"  # fallback default
+                        print("Warning: DJI MIC MINI not found, using hardcoded fallback")
+
                     rec_cmd = [
                         "arecord",
-                        "-D", "plughw:1,0",
+                        "-D", device,
                         "-f", "S16_LE",
                         "-r", "16000",
                         "-c", "1",
@@ -389,7 +450,17 @@ if __name__ == "__main__":
                         messages= [
                             {"role": "system", "content": "You are a robot teaching assistant in a preschool reading an interactive story to 3-5 year olds. You have told part of a story and have asked the student a question. Politely comment on the student's answer. If the answer is if it is not rude or inappropriate (e.g., 'Oh that is a good idea!'). It is not your job to continue the story, just to be polite to the student and make a small comment. Don't ask questions."},
                             *messages,
-                            {"role": "user", "content": f"The student answered '{result}'. You might have misheard some of it or missed what the student said. If the student gave no response let them know that that is OK not to worry, you will think of something. If the response does not make sense in the context acknowledge that maybe you did not hear right and say that is OK you have an idea. If the response is appropriate acknowledge the student's answer in one sentence. This should be a natural part of the conversation ('Good choice!', 'Neat, let's see what happens!' 'Interesting!'). You may incorporate the student's answer in your response if appropriate and natural to do so. Only respond to the most recent response, do not use respond to anything further back in the conversation. If the answer is inappropriate or rude say that you are not sure about that and lets try something else. DO NOT ask questions"},
+                            {"role": "user", "content": (
+                                f"The question asked was {inserts[i]}. The student answered '{result}'. You might have misheard some of it or missed what the student said. "
+                                "1. If the student gave no response let them know that that is OK not to worry, you will think of something. "
+                                "2. If the answer is inappropriate or rude say that you are not sure about that and lets try something else. "
+                                "3. If the response does not make sense in the context then acknowledge that maybe you did not hear right and that is OK you have an idea. "
+                                "4. If the question offered specific options (like 'upstairs or downstairs' or 'forest or pond') and the child's answer is NOT one of those options: say something like 'Great Idea! But I'm not sure that's the best approach. That's okay I have an idea!' Do NOT say 'let's see what happens' or treat it as valid. "
+                                "5. If the question was open ended but the response includes new locations or objects that are unusual for that location, acknowledge the creativity but do NOT approve it. Say you you're not sure that's the best approach and have a different idea."
+                                "6. If the response is appropriate acknowledge the student's answer in one sentence. This should be a natural part of the conversation ('Good choice!', 'Neat, let's see what happens!' 'Interesting!'). You may incorporate the student's answer in your response if appropriate and natural to do so. "
+                                "Only respond to the most recent response, do not respond to anything further back in the conversation. "
+                                "DO NOT ask questions"
+                            )},
                         ]
                     )
                     feedback_to_child = response.choices[0].message.content.strip()
@@ -404,22 +475,50 @@ if __name__ == "__main__":
                     fb_wav = f"{WAV_PATH}/to_play-{fb_id}.wav"
                     wait_done(fb_wav)
                     
+                    # story_generation_messages = messages + [
+                    #     {
+                    #         "role": "user",
+                    #         "content": f"""
+                    #             The child responded: {result!r}.
+
+                    #         Continue the story with one single line incorporating the child's response.
+                    #         Your response should be a stand-alone line that directly reflects the child's response to your question, but does not alter the following story in any way.
+                    #         After this response, the story continues to follow a fixed script.
+
+                    #         If the child gave an empty response, an out-of-context response for the question, or a rude/inappropriate response for children aged 3-5, create your own suitable response to the question not using what the child said.
+
+                    #         ONLY USE THE CHILD's response if it makes sense as a response to your question.
+                    #         Return only the one story sentence.
+                            
+                    #         DO NOT use the word bees, betis, dobane, deer, balide, bird, taytot, or gigin in your response
+                    #         """
+                    #     }
+                    # ]
+
+                   
                     story_generation_messages = messages + [
                         {
                             "role": "user",
                             "content": f"""
+                                The question you asked was: '{inserts[i]}'
                                 The child responded: {result!r}.
+                                You have already responded to the child with: '{feedback_to_child}'
 
-                            Continue the story with one single line incorporating the child's response.
-                            Your response should be a stand-alone line that directly reflects the child's response to your question, but does not alter the following story in any way.
-                            After this response, the story continues to follow a fixed script.
 
-                            If the child gave an empty response, an out-of-context response for the question, or a rude/inappropriate response for children aged 3-5, create your own suitable response to the question not using what the child said.
+                                Continue the story with one single line that moves the story forward naturally, incorporating the child's response if relevant.
+                                Your response should be a stand-alone line that directly reflects the child's response to your question, but does not alter the following story in any way.
+                                After this response, the story continues to follow a fixed script.
 
-                            ONLY USE THE CHILD's response if it makes sense as a response to your question.
-                            Return only the one story sentence.
-                            
-                            DO NOT use the word bees, betis, dobane, deer, balide, bird, taytot, or gigin in your response
+                                Do NOT introduce new locations, objects, or ideas not already in the story.
+                                Do NOT try to be creative or poetic. Keep it simple and direct.
+
+                                Follow these rules strictly:
+                                    1. If the child gave no response or you responded that you have your own idea: pick whichever option fits the next story line best and write accordingly.
+                                    2. If the question had specific options (like 'upstairs or downstairs') and the child's answer was NOT one of those options: ignore their answer entirely and pick whichever option fits the story line best.
+                                    3. If the child's response was appropriate and matched the question: incorporate it naturally.
+                                    4. The sentence must be consistent with your feedback above and must lead naturally into the rest of the fixed script.
+                                    5. ONLY ONE sentence. Do not ask questions. Do not alter the direction of the fixed story that follows.
+                                    6. DO NOT use the word bees, betis, dobane, deer, balide, bird, taytot, or gigin in your response
                             """
                         }
                     ]
