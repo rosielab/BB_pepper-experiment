@@ -375,6 +375,8 @@ if __name__ == "__main__":
                         spk = torch.tensor([1], device=tts_device, dtype=torch.long)
                     elif VOICE == 'chanel':
                         spk = torch.tensor([6], device=tts_device, dtype=torch.long)
+                    elif VOICE == 'neutral':
+                        spk = torch.tensor([10], device=tts_device, dtype=torch.long)
 
                     q_id = f"q-{i}"
                     synthesis(tts_device, tts_model, vocoder, denoiser, inserts[i], spk, LANGUAGE, q_id)
@@ -561,12 +563,15 @@ if __name__ == "__main__":
                     spk = torch.tensor([1], device=tts_device, dtype=torch.long)
                 elif VOICE == 'chanel':
                     spk = torch.tensor([6], device=tts_device, dtype=torch.long)
+                elif VOICE == 'neutral':
+                    spk = torch.tensor([10], device=tts_device, dtype=torch.long)
                 else:
                     print("hmmm wrong voice")
-                for emote in emoji_mapping:
-                    if emote in clean_line:
-                        spk = torch.tensor([emoji_mapping[emote]], device=tts_device, dtype=torch.long)
-                        break
+                if VOICE != 'neutral':
+                    for emote in emoji_mapping:
+                        if emote in clean_line:
+                            spk = torch.tensor([emoji_mapping[emote]], device=tts_device, dtype=torch.long)
+                            break
                 clean_line = re.sub(r"[^\w\s]*[\U00010000-\U0010ffff]+[^\w\s]*", "", clean_line)
                 #matcha cannot handle brackets
                 clean_line = clean_line.replace(')', '')

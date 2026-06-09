@@ -303,7 +303,7 @@ num_lines = sum(1 for line in open(script))
 print("Number of lines in script.txt: {}".format(num_lines))
 
 out = storytelling_output_path.rstrip("/")
-inserts = {4, 10, 18, 26, 33, 42}
+inserts = {5, 13, 21, 28, 38, 50}
 
 #for i in range(num_lines):)
 #
