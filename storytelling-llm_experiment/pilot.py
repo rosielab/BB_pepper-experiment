@@ -27,7 +27,7 @@ WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 demo = "storytelling" # Replace with the name of the demo you want to run
 pepper_ip = "192.168.0.120"  # Replace with Pepper's IP address
-script = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji.txt"
+script = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji_short.txt"
 storytelling_output_path =  "./outputs/"
 
 class Authenticator:
@@ -303,7 +303,7 @@ num_lines = sum(1 for line in open(script))
 print("Number of lines in script.txt: {}".format(num_lines))
 
 out = storytelling_output_path.rstrip("/")
-inserts = {5, 13, 21, 28, 38, 50}
+inserts = {6, 11, 16, 21, 26, 31, 36}
 
 #for i in range(num_lines):)
 #

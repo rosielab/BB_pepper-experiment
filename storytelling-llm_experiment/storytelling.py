@@ -13,6 +13,7 @@ import time
 from types import SimpleNamespace
 import json, torch
 from matcha.models.matcha_tts import MatchaTTS
+from random import randint
 
 
 from matcha.hifigan.config import v1
@@ -60,7 +61,7 @@ WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 
 VOICE = 'chanel'
-SCRIPT_PATH = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji.txt"
+SCRIPT_PATH = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji_short.txt"
 WAV_PATH = str(WORK_OUTPUTS)
 ############################ TTS PARAMETERS ############################################################################
 #TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "matcha_state_dict.pt")
@@ -78,29 +79,6 @@ VOCODER_URLS = {
 }
 
 #maps the emojis used by the LLM to the speaker numbers from the Matcha-TTS checkpoint
-if VOICE == 'emoji':
-    emoji_mapping = {
-        '😍' : 107,
-        '😡' : 58,
-        '😎' : 79,
-        '😭' : 103,
-        '🙄' : 66,
-        '😁' : 18,
-        '🙂' : 12,
-        '🤣' : 15,
-        '😮' : 54,
-        '😅' : 22,
-        '🤔' : 17
-    }
-if VOICE == 'olivia':
-    # for Olivia
-    emoji_mapping = {
-        '😡' : 4,
-        '😭' : 3,
-        '😁' : 2,
-        '🙂' : 1,
-        '😮' : 0,
-    }
 # for Chanel
 if VOICE == 'chanel':
     emoji_mapping = {
@@ -336,12 +314,12 @@ if __name__ == "__main__":
         vocoder, denoiser = load_vocoder(VOCODER_NAME, paths["vocoder"], tts_device)
         
         inserts = {
-            4: "Where in his room should the boy check first?",
-            10: "Should he look upstairs or downstairs?",
-            18: "Should they go look in the forest, or by the pond?",
-            26: "Where should they hide?",
-            33: "Should the boy climb up on the rock or hide behind it?",
-            42: "Should the boy go for a ride or hop off?",
+            6: "Should they go look in the forest, or by the pond?",
+            11: "Where should they hide?",
+            16: "Should the boy climb over the rock or go around it?",
+            21: "Should the boy go back into the forest, or follow the river?",
+            26: "Should the boy go for a ride or hop off?",
+            31: "Do you think the boy is happy to find his frog?",
         }
 
         with open(SCRIPT_PATH, 'r') as file:
@@ -369,14 +347,13 @@ if __name__ == "__main__":
 
             for i, line in enumerate(file):
                 if i in inserts:
-                    if VOICE == 'emoji':
-                        spk = torch.tensor([12], device=tts_device, dtype=torch.long)
-                    elif VOICE == 'olivia':
-                        spk = torch.tensor([1], device=tts_device, dtype=torch.long)
-                    elif VOICE == 'chanel':
+                    if VOICE == 'chanel':
                         spk = torch.tensor([6], device=tts_device, dtype=torch.long)
                     elif VOICE == 'neutral':
                         spk = torch.tensor([10], device=tts_device, dtype=torch.long)
+                    elif VOICE == 'random':
+                        random_emoji = randint(5, 10)
+                        spk = torch.tensor([random_emoji], device=tts_device, dtype=torch.long)
 
                     q_id = f"q-{i}"
                     synthesis(tts_device, tts_model, vocoder, denoiser, inserts[i], spk, LANGUAGE, q_id)
@@ -557,17 +534,16 @@ if __name__ == "__main__":
                     continue
 
                 clean_line = line.strip()
-                if VOICE == 'emoji':
-                    spk = torch.tensor([12], device=tts_device, dtype=torch.long)
-                elif VOICE == 'olivia':
-                    spk = torch.tensor([1], device=tts_device, dtype=torch.long)
-                elif VOICE == 'chanel':
+                if VOICE == 'chanel':
                     spk = torch.tensor([6], device=tts_device, dtype=torch.long)
                 elif VOICE == 'neutral':
                     spk = torch.tensor([10], device=tts_device, dtype=torch.long)
+                elif VOICE == 'random':
+                    random_emoji = randint(5, 10)
+                    spk = torch.tensor([random_emoji], device=tts_device, dtype=torch.long)
                 else:
                     print("hmmm wrong voice")
-                if VOICE != 'neutral':
+                if VOICE == 'chanel':
                     for emote in emoji_mapping:
                         if emote in clean_line:
                             spk = torch.tensor([emoji_mapping[emote]], device=tts_device, dtype=torch.long)
