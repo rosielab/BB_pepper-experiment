@@ -62,7 +62,7 @@ WORK_RESULTS = BASE_DIR / "results"
 WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 
-VOICE = 'random' # replace with chanel/random/neutral
+VOICE = 'random' # replace with chanel/random/neutral, then ctrl+s to save
 SCRIPT_PATH = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji_short.txt"
 WAV_PATH = str(WORK_OUTPUTS)
 ############################ TTS PARAMETERS ############################################################################
@@ -277,7 +277,8 @@ def synthesis(device, model, vocoder, denoiser, text, spk, language, i):
     output["waveform"] = to_waveform(output["mel"], vocoder, denoiser)
 
     # ── Boost volume ──────────────────────────────────────────────
-    GAIN = 0.5  # try 1.5–4.0; higher = louder (clips if > 1 after scaling)
+    # GAIN = 0.5  # try 1.5–4.0; higher = louder (clips if > 1 after scaling)
+    GAIN = 0.3  # try 1.5–4.0; higher = louder (clips if > 1 after scaling)
     output["waveform"] = np.clip(output["waveform"] * GAIN, -1.0, 1.0)
     peak = float(np.abs(output["waveform"]).max())
     print(f"[AUDIO] peak amplitude after gain: {peak:.4f}")  # should be close to 1.0
@@ -317,11 +318,11 @@ if __name__ == "__main__":
         
         inserts = {
             5: "Should they go look in the forest, or by the pond?",
-            10: "Where should they hide?",
-            15: "Should the boy climb over the rock or go around it?",
-            20: "Should the boy go back into the forest, or follow the river?",
-            25: "Should the boy go for a ride or hop off?",
-            34: "Do you think the boy is happy to find his frog?",
+            10: "Where should they go to hide from the balides?",
+            14: "What do you think the taytot sounds like?",
+            19: "After falling off the gigin, where should the boy go next?",
+            24: "Should the boy ride the dobane or hop off?",
+            26: "What do you think is behind the kirop?",
         }
 
         with open(SCRIPT_PATH, 'r') as file:
@@ -428,6 +429,7 @@ if __name__ == "__main__":
                     try:
                         response = client.chat.completions.create(
                             model="gpt-4o",
+                            logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '13738': -100, '5008': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
                             messages= [
                                 {"role": "system", "content": "You are a robot teaching assistant in a preschool reading an interactive story to 3-5 year olds. You have told part of a story and have asked the student a question. Politely comment on the student's answer. If the answer is if it is not rude or inappropriate (e.g., 'Oh that is a good idea!'). It is not your job to continue the story, just to be polite to the student and make a small comment. Don't ask questions."},
                                 *messages,
@@ -510,6 +512,7 @@ if __name__ == "__main__":
                     try:
                         response = client.chat.completions.create(
                             model="gpt-4o",
+                            logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '13738': -100, '5008': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
                             messages=story_generation_messages
                         )
                         answer_to_child = response.choices[0].message.content.strip()
