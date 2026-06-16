@@ -37,6 +37,8 @@ import tty
 import termios
 import whisper
 
+import openai
+
 from openai import AzureOpenAI
 
 import prompts
@@ -60,13 +62,13 @@ WORK_RESULTS = BASE_DIR / "results"
 WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 
-VOICE = 'chanel'
+VOICE = 'random' # replace with chanel/random/neutral
 SCRIPT_PATH = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji_short.txt"
 WAV_PATH = str(WORK_OUTPUTS)
 ############################ TTS PARAMETERS ############################################################################
 #TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "matcha_state_dict.pt")
 #HPARAMS_PATH = os.path.join(os.path.dirname(__file__), "matcha_hparams.json")
-TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "emojivoice-chanel-olivia-latest.ckpt")
+TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "chanel-with-neutral.ckpt")
 SPEAKING_RATE = 0.9
 STEPS = 10
 LANGUAGE = "en"
@@ -92,7 +94,7 @@ if VOICE == 'chanel':
 
 ####################### ASR SETUP ######################################################################################
 
-ASR_MODEL = "small.en"
+ASR_MODEL = "medium.en"
 
 ########################################################################################################################
 class Recorder:
@@ -314,12 +316,12 @@ if __name__ == "__main__":
         vocoder, denoiser = load_vocoder(VOCODER_NAME, paths["vocoder"], tts_device)
         
         inserts = {
-            6: "Should they go look in the forest, or by the pond?",
-            11: "Where should they hide?",
-            16: "Should the boy climb over the rock or go around it?",
-            21: "Should the boy go back into the forest, or follow the river?",
-            26: "Should the boy go for a ride or hop off?",
-            31: "Do you think the boy is happy to find his frog?",
+            5: "Should they go look in the forest, or by the pond?",
+            10: "Where should they hide?",
+            15: "Should the boy climb over the rock or go around it?",
+            20: "Should the boy go back into the forest, or follow the river?",
+            25: "Should the boy go for a ride or hop off?",
+            34: "Do you think the boy is happy to find his frog?",
         }
 
         with open(SCRIPT_PATH, 'r') as file:
@@ -365,7 +367,7 @@ if __name__ == "__main__":
 
                     q_wav = f"{WAV_PATH}/to_play-{q_id}.wav"
                     
-                    print("waiting")
+                    print("waiting for insert", i)
 
                     wait_done(q_wav)
                     
@@ -423,26 +425,29 @@ if __name__ == "__main__":
                         result = result["text"].strip()
 
                     print(f'speaker said: {result}')
-
-                    response = client.chat.completions.create(
-                        model="gpt-4o",
-                        messages= [
-                            {"role": "system", "content": "You are a robot teaching assistant in a preschool reading an interactive story to 3-5 year olds. You have told part of a story and have asked the student a question. Politely comment on the student's answer. If the answer is if it is not rude or inappropriate (e.g., 'Oh that is a good idea!'). It is not your job to continue the story, just to be polite to the student and make a small comment. Don't ask questions."},
-                            *messages,
-                            {"role": "user", "content": (
-                                f"The question asked was {inserts[i]}. The student answered '{result}'. You might have misheard some of it or missed what the student said. "
-                                "1. If the student gave no response let them know that that is OK not to worry, you will think of something. "
-                                "2. If the answer is inappropriate or rude say that you are not sure about that and lets try something else. "
-                                "3. If the response does not make sense in the context then acknowledge that maybe you did not hear right and that is OK you have an idea. "
-                                "4. If the question offered specific options (like 'upstairs or downstairs' or 'forest or pond') and the child's answer is NOT one of those options: say something like 'Great Idea! But I'm not sure that's the best approach. That's okay I have an idea!' Do NOT say 'let's see what happens' or treat it as valid. "
-                                "5. If the question was open ended but the response includes new locations or objects that are unusual for that location, acknowledge the creativity but do NOT approve it. Say you you're not sure that's the best approach and have a different idea."
-                                "6. If the response is appropriate acknowledge the student's answer in one sentence. This should be a natural part of the conversation ('Good choice!', 'Neat, let's see what happens!' 'Interesting!'). You may incorporate the student's answer in your response if appropriate and natural to do so. "
-                                "Only respond to the most recent response, do not respond to anything further back in the conversation. "
-                                "DO NOT ask questions"
-                            )},
-                        ]
-                    )
-                    feedback_to_child = response.choices[0].message.content.strip()
+                    try:
+                        response = client.chat.completions.create(
+                            model="gpt-4o",
+                            messages= [
+                                {"role": "system", "content": "You are a robot teaching assistant in a preschool reading an interactive story to 3-5 year olds. You have told part of a story and have asked the student a question. Politely comment on the student's answer. If the answer is if it is not rude or inappropriate (e.g., 'Oh that is a good idea!'). It is not your job to continue the story, just to be polite to the student and make a small comment. Don't ask questions."},
+                                *messages,
+                                {"role": "user", "content": (
+                                    f"The question asked was {inserts[i]}. The student answered '{result}'. You might have misheard some of it or missed what the student said. "
+                                    "1. If the student gave no response let them know that that is OK not to worry, you will think of something. "
+                                    "2. If the answer is inappropriate or rude say that you are not sure about that and lets try something else. "
+                                    "3. If the response does not make sense in the context then acknowledge that maybe you did not hear right and that is OK you have an idea. "
+                                    "4. If the question offered specific options (like 'upstairs or downstairs' or 'forest or pond') and the child's answer is NOT one of those options: say something like 'Great Idea! But I'm not sure that's the best approach. That's okay I have an idea!' Do NOT say 'let's see what happens' or treat it as valid. "
+                                    "5. If the question was open ended but the response includes new locations or objects that are unusual for that location, acknowledge the creativity but do NOT approve it. Say you you're not sure that's the best approach and have a different idea."
+                                    "6. If the response is appropriate acknowledge the student's answer in one sentence. This should be a natural part of the conversation ('Good choice!', 'Neat, let's see what happens!' 'Interesting!'). You may incorporate the student's answer in your response if appropriate and natural to do so. "
+                                    "Only respond to the most recent response, do not respond to anything further back in the conversation. "
+                                    "DO NOT ask questions"
+                                )},
+                            ]
+                        )
+                        feedback_to_child = response.choices[0].message.content.strip()
+                    except (openai.APITimeoutError, Exception) as e:
+                        print(f"[WARNING] API call failed: {e}")
+                        feedback_to_child = "Hmm, maybe I didn't hear you quite right, and that's OK! I have an idea!"
                     print("[Feedback to student] " + feedback_to_child)
                     
                     fb_id = f"fb-{i}"
@@ -502,12 +507,14 @@ if __name__ == "__main__":
                         }
                     ]
 
-                    response = client.chat.completions.create(
-                        model="gpt-4o",
-                        messages=story_generation_messages
-                    )
-                    
-                    answer_to_child = response.choices[0].message.content.strip()
+                    try:
+                        response = client.chat.completions.create(
+                            model="gpt-4o",
+                            messages=story_generation_messages
+                        )
+                        answer_to_child = response.choices[0].message.content.strip()
+                    except (openai.APITimeoutError, Exception) as e:
+                        answer_to_child = "Hmm, maybe I didn't hear you quite right, and that's OK! I have an idea!"
                     print("[Answer to student] " + answer_to_child)
                     
                     messages.append({
@@ -554,6 +561,8 @@ if __name__ == "__main__":
                 clean_line = clean_line.replace('(', '')
                 clean_line = " ".join(clean_line.split())
                 print(f"this is the line: {clean_line}")
+                if not clean_line:
+                    continue
                 synthesis(tts_device, tts_model, vocoder, denoiser, clean_line, spk, LANGUAGE, i)
                 messages.append({
                         "role": "assistant",
