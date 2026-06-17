@@ -297,6 +297,20 @@ def assert_required_models_available():
 def contains_only_non_emoji(string):
     return all(not emoji.is_emoji(char) for char in string) and len(string.strip()) > 0
 
+def apply_word_replacements(text: str) -> str:
+    if not text:
+        return text
+    replacements = {
+        r'\b(kirop|crystal)\b': 'object',
+        r'\b(dobane|deer)\b': 'animal',
+        r'\b(gigin|mushroom)\b': 'plant',
+        r'\b(balides|bees)\b': 'creatures',
+        r'\b(taytot|bird|parrot)\b': 'creature'
+    }
+    for pattern, replacement in replacements.items():
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+    return text
+
 if __name__ == "__main__":
     try:
         tts_device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -429,7 +443,7 @@ if __name__ == "__main__":
                     try:
                         response = client.chat.completions.create(
                             model="gpt-4o",
-                            logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '13738': -100, '5008': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
+                            #logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '13738': -100, '5008': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
                             messages= [
                                 {"role": "system", "content": "You are a robot teaching assistant in a preschool reading an interactive story to 3-5 year olds. You have told part of a story and have asked the student a question. Politely comment on the student's answer. If the answer is if it is not rude or inappropriate (e.g., 'Oh that is a good idea!'). It is not your job to continue the story, just to be polite to the student and make a small comment. Don't ask questions."},
                                 *messages,
@@ -447,6 +461,7 @@ if __name__ == "__main__":
                             ]
                         )
                         feedback_to_child = response.choices[0].message.content.strip()
+                        feedback_to_child = apply_word_replacements(feedback_to_child)
                     except (openai.APITimeoutError, Exception) as e:
                         print(f"[WARNING] API call failed: {e}")
                         feedback_to_child = "Hmm, maybe I didn't hear you quite right, and that's OK! I have an idea!"
@@ -512,10 +527,11 @@ if __name__ == "__main__":
                     try:
                         response = client.chat.completions.create(
                             model="gpt-4o",
-                            logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '13738': -100, '5008': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
+                            #logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '13738': -100, '5008': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
                             messages=story_generation_messages
                         )
                         answer_to_child = response.choices[0].message.content.strip()
+                        answer_to_child = apply_word_replacements(answer_to_child)
                     except (openai.APITimeoutError, Exception) as e:
                         answer_to_child = "Hmm, maybe I didn't hear you quite right, and that's OK! I have an idea!"
                     print("[Answer to student] " + answer_to_child)
