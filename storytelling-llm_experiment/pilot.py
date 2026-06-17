@@ -25,6 +25,7 @@ WORK_OUTPUTS = BASE_DIR / "outputs"
 WORK_RESULTS = BASE_DIR / "results"
 WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
+fb_latencies = []  # stop-talking -> response-begins-playing, per insert
 demo = "storytelling" # Replace with the name of the demo you want to run
 pepper_ip = "192.168.0.120"  # Replace with Pepper's IP address
 script = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji_short.txt"
@@ -161,6 +162,20 @@ def play_audio_file_blocking_mark(ip, file_path, local_wav_path, file_name="outp
     #check if on pepper
 
     run_animation_on_pepper()
+
+    # --- latency timer: only for feedback ("fb-") clips ---
+    if "fb-" in file_name:
+        idx = file_name.split("fb-")[-1]
+        start_file = os.path.join(os.path.dirname(local_wav_path), f"listen-start-{idx}.txt")
+        try:
+            with open(start_file) as _sf:
+                t0 = float(_sf.read().strip())
+            lat = time.time() - t0
+            fb_latencies.append(lat)
+            print(f"[LATENCY] insert {idx}: {lat:.2f}s (stop talking -> response plays)")
+        except FileNotFoundError:
+            print(f"[LATENCY] no start timestamp for insert {idx}")
+
     print(f"[PLAY] requesting play: {remote_path}")
     play_id = audio_player_service.playFile(remote_path)
     print(f"[PLAY] playFile returned: {play_id}")
@@ -250,6 +265,13 @@ def wait_for_file_complete(path, stable_checks=3, poll=0.1):
             same = 0
             last = size
         time.sleep(poll)
+
+try:
+    # shutil.rmtree(ARCHIVE_ROOT)
+    # shutil.rmtree(WORK_RESULTS)
+    shutil.rmtree(WORK_OUTPUTS)
+except Exception as e:
+    print(f"Could not delete due to: {e}")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--name", type=str, default="unnamed")
@@ -378,13 +400,20 @@ print("playing ending")
 
 play_and_mark_pepper("{}/to_play-final.wav".format(out))
 
+
+if fb_latencies:
+    avg = sum(fb_latencies) / len(fb_latencies)
+    print(f"[LATENCY] average over {len(fb_latencies)} inserts: {avg:.2f}s")
+else:
+    print("[LATENCY] no latency samples collected.")
 archive_and_clean()
-try:
-    # shutil.rmtree(ARCHIVE_ROOT)
-    # shutil.rmtree(WORK_RESULTS)
-    shutil.rmtree(WORK_OUTPUTS)
-except Exception as e:
-    print(f"Could not delete due to: {e}")
+
+# try:
+#     # shutil.rmtree(ARCHIVE_ROOT)
+#     # shutil.rmtree(WORK_RESULTS)
+#     shutil.rmtree(WORK_OUTPUTS)
+# except Exception as e:
+#     print(f"Could not delete due to: {e}")
 
 
 print("[DONE] Archived + cleaned working folders.")

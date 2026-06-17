@@ -62,7 +62,7 @@ WORK_RESULTS = BASE_DIR / "results"
 WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 
-VOICE = 'random' # replace with chanel/random/neutral, then ctrl+s to save
+VOICE = 'chanel' # replace with chanel/random/neutral, then ctrl+s to save
 SCRIPT_PATH = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji_short.txt"
 WAV_PATH = str(WORK_OUTPUTS)
 ############################ TTS PARAMETERS ############################################################################
@@ -319,7 +319,7 @@ if __name__ == "__main__":
         inserts = {
             5: "Should they go look in the forest, or by the pond?",
             10: "Where should they go to hide from the balides?",
-            14: "What do you think the taytot sounds like?",
+            14: "After saying goodbye to the Taytot where does the boy go next?",
             19: "After falling off the gigin, where should the boy go next?",
             24: "Should the boy ride the dobane or hop off?",
             26: "What do you think is behind the kirop?",
@@ -417,6 +417,10 @@ if __name__ == "__main__":
                     input()  # press Enter to stop recording
                     proc.send_signal(signal.SIGINT)
                     proc.wait()
+
+                    # --- latency timer: person stopped talking, transcription about to begin ---
+                    with open(f"{WAV_PATH}/listen-start-{i}.txt", "w") as _tf:
+                        _tf.write(str(time.time()))
                     
                     if is_silent_wav(f"./results/output-{i}.wav"):
                         result = ""
@@ -429,18 +433,19 @@ if __name__ == "__main__":
                     try:
                         response = client.chat.completions.create(
                             model="gpt-4o",
-                            logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '13738': -100, '5008': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
+                            logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '20733': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '194363': -100, '5008': -100, '13738': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
                             messages= [
                                 {"role": "system", "content": "You are a robot teaching assistant in a preschool reading an interactive story to 3-5 year olds. You have told part of a story and have asked the student a question. Politely comment on the student's answer. If the answer is if it is not rude or inappropriate (e.g., 'Oh that is a good idea!'). It is not your job to continue the story, just to be polite to the student and make a small comment. Don't ask questions."},
                                 *messages,
                                 {"role": "user", "content": (
-                                    f"The question asked was {inserts[i]}. The student answered '{result}'. You might have misheard some of it or missed what the student said. "
+                                    f"The question asked was {inserts[i]}. The student answered '{result}'. You might have misheard some of it or missed what the student said."
                                     "1. If the student gave no response let them know that that is OK not to worry, you will think of something. "
                                     "2. If the answer is inappropriate or rude say that you are not sure about that and lets try something else. "
                                     "3. If the response does not make sense in the context then acknowledge that maybe you did not hear right and that is OK you have an idea. "
                                     "4. If the question offered specific options (like 'upstairs or downstairs' or 'forest or pond') and the child's answer is NOT one of those options: say something like 'Great Idea! But I'm not sure that's the best approach. That's okay I have an idea!' Do NOT say 'let's see what happens' or treat it as valid. "
                                     "5. If the question was open ended but the response includes new locations or objects that are unusual for that location, acknowledge the creativity but do NOT approve it. Say you you're not sure that's the best approach and have a different idea."
                                     "6. If the response is appropriate acknowledge the student's answer in one sentence. This should be a natural part of the conversation ('Good choice!', 'Neat, let's see what happens!' 'Interesting!'). You may incorporate the student's answer in your response if appropriate and natural to do so. "
+                                    "7. Your response should DO NOT use the word bees, betis, dobane, deer, balide, bird, kirrop, taytot, or gigin in your response, even if it is mentioned in the question"
                                     "Only respond to the most recent response, do not respond to anything further back in the conversation. "
                                     "DO NOT ask questions"
                                 )},
@@ -494,6 +499,7 @@ if __name__ == "__main__":
                                 Continue the story with one single line that moves the story forward naturally, incorporating the child's response if relevant.
                                 Your response should be a stand-alone line that directly reflects the child's response to your question, but does not alter the following story in any way.
                                 After this response, the story continues to follow a fixed script.
+                                Make sure to not contrdict what you already responded with
 
                                 Do NOT introduce new locations, objects, or ideas not already in the story.
                                 Do NOT try to be creative or poetic. Keep it simple and direct.
@@ -512,7 +518,7 @@ if __name__ == "__main__":
                     try:
                         response = client.chat.completions.create(
                             model="gpt-4o",
-                            logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '13738': -100, '5008': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
+                            logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '20733': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '194363': -100, '5008': -100, '13738': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
                             messages=story_generation_messages
                         )
                         answer_to_child = response.choices[0].message.content.strip()

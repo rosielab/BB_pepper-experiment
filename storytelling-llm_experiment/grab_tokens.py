@@ -5,11 +5,11 @@ encoder = tiktoken.encoding_for_model("gpt-4o")
 
 # Your target words, both standard and space-prefixed
 target_words = [
-    "kirop", " kirop", "Kirop", "kirop ", " Kirop", "Kirop ",
+    "kirop", " kirop", "Kirop", "kirop ", " Kirop", "Kirop ", " kirrop",
     "dobane", " dobane", "dobane ", "Dobane", " Dobane", "Dobane ",
-    "gigin", " gigin", "gigin ","Gigin", " Gigin", "Gigin ",
+    "gigin", " gigin", "gigin ","Gigin", " Gigin", "Gigin ", "gig"
     "balides", " balides", "balides ", " Balides", "Balides ", "Balides",
-    "taytot", " taytot", "taytot ", "Taytot", " Taytot", "Taytot "
+    "taytot", " taytot", "taytot ", "Taytot", " Taytot", "Taytot ", "tay"
 ]
 
 banned_dict = {}
