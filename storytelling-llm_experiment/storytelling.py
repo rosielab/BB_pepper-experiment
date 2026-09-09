@@ -62,7 +62,7 @@ WORK_RESULTS = BASE_DIR / "results"
 WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 
-VOICE = 'chanel' # replace with chanel/random/neutral, then ctrl+s to save
+VOICE = 'neutral' # replace with chanel/random/neutral, then ctrl+s to save
 SCRIPT_PATH = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji_short.txt"
 WAV_PATH = str(WORK_OUTPUTS)
 ############################ TTS PARAMETERS ############################################################################
@@ -459,7 +459,6 @@ if __name__ == "__main__":
                                     "4. If the question offered specific options (like 'upstairs or downstairs' or 'forest or pond') and the child's answer is NOT one of those options: say something like 'Great Idea! But I'm not sure that's the best approach. That's okay I have an idea!' Do NOT say 'let's see what happens' or treat it as valid. "
                                     "5. If the question was open ended but the response includes new locations or objects that are unusual for that location, acknowledge the creativity but do NOT approve it. Say you you're not sure that's the best approach and have a different idea."
                                     "6. If the response is appropriate acknowledge the student's answer in one sentence. This should be a natural part of the conversation ('Good choice!', 'Neat, let's see what happens!' 'Interesting!'). You may incorporate the student's answer in your response if appropriate and natural to do so. "
-                                    "7. Your response should DO NOT use the word bees, betis, dobane, deer, balide, bird, kirrop, taytot, or gigin in your response, even if it is mentioned in the question"
                                     "Only respond to the most recent response, do not respond to anything further back in the conversation. "
                                     "DO NOT ask questions"
                                 )},

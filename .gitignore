@@ -1,1 +1,5 @@
 *.ckpt
+*/outputs/*
+*/overallresults/*
+*/results/*
+=
