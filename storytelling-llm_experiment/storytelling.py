@@ -331,12 +331,12 @@ if __name__ == "__main__":
         vocoder, denoiser = load_vocoder(VOCODER_NAME, paths["vocoder"], tts_device)
         
         inserts = {
-            5: "Should they go look in the forest, or by the pond?",
-            10: "Where should they go to hide from the balides?",
-            14: "After saying goodbye to the Taytot where does the boy go next?",
-            19: "After falling off the gigin, where should the boy go next?",
-            24: "Should the boy ride the dobane or hop off?",
-            26: "What do you think is behind the kirop?",
+            8: "Since the balide is now gone, should they go look in the forest, or by the pond?",
+            13: "Where should they go to hide from the balides?",
+            17: "After saying goodbye to the Taytot where does the boy go next?",
+            22: "After falling off the gigin, where should the boy go next?",
+            27: "Should the boy ride the dobane or hop off?",
+            29: "What do you think is behind the kirop?",
         }
 
         with open(SCRIPT_PATH, 'r') as file:
