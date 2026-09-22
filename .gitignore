@@ -3,3 +3,5 @@
 */overallresults/*
 */results/*
 =
+storytelling-llm_experiment/.current_run.json
+storytelling-llm_experiment/__pycache__/prompts.cpython-311.pyc

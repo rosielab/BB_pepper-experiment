@@ -62,8 +62,8 @@ WORK_RESULTS = BASE_DIR / "results"
 WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 
-VOICE = 'neutral' # replace with chanel/random/neutral, then ctrl+s to save
-SCRIPT_PATH = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji_short.txt"
+VOICE = 'chanel' # replace with chanel/random/neutral, then ctrl+s to save
+SCRIPT_PATH = str(BASE_DIR / "llm_script_emoji_short.txt")
 WAV_PATH = str(WORK_OUTPUTS)
 ############################ TTS PARAMETERS ############################################################################
 #TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "matcha_state_dict.pt")
@@ -412,12 +412,13 @@ if __name__ == "__main__":
                                     card, device = match.groups()
                                     return f"plughw:{card},{device}"
                         raise RuntimeError(f"ALSA device '{card_name}' not found")
-                    
-                    try:
-                        device = find_alsa_device("DJI MIC MINI")
-                    except RuntimeError:
-                        device = "plughw:2,0"  # fallback default
-                        print("Warning: DJI MIC MINI not found, using hardcoded fallback")
+
+                    # WSL has no ALSA hardware; record via the PulseAudio bridge,
+                    # which captures whatever is set as Windows' default input
+                    # (set the DJI Mic Mini as default in Windows Sound settings).
+                    # On a bare-metal Linux box with the DJI as a real USB card,
+                    # swap back to: device = find_alsa_device("DJI MIC MINI")
+                    device = os.environ.get("REC_DEVICE", "pulse")
 
                     rec_cmd = [
                         "arecord",

@@ -1,0 +1,12 @@
+terminal 1:
+wsl
+conda activate bbpepper
+cd storytelling-llm_experiment
+python storytelling.py
+
+
+terminal 2:
+wsl
+conda activate bbpepper
+cd storytelling-llm_experiment
+python pilot.py

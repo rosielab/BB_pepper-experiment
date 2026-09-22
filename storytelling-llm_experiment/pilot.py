@@ -28,7 +28,7 @@ WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 fb_latencies = []  # stop-talking -> response-begins-playing, per insert
 demo = "storytelling" # Replace with the name of the demo you want to run
 pepper_ip = "192.168.0.120"  # Replace with Pepper's IP address
-script = "/home/rosie/BB_pepper-experiment/storytelling-llm_experiment/llm_script_emoji_short.txt"
+script = str(BASE_DIR / "llm_script_emoji_short.txt")
 storytelling_output_path =  "./outputs/"
 
 class Authenticator:
