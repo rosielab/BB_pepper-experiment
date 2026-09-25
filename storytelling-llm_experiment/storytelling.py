@@ -301,11 +301,11 @@ def apply_word_replacements(text: str) -> str:
     if not text:
         return text
     replacements = {
-        r'\b(kirop|crystal)\b': 'object',
-        r'\b(dobane|deer)\b': 'animal',
-        r'\b(gigin|mushroom)\b': 'plant',
+        r'\b(kyrop|crystal)\b': 'object',
+        r'\b(doh-bane|deer)\b': 'animal',
+        r'\b(guyg-in|mushroom)\b': 'plant',
         r'\b(balides|bees)\b': 'creatures',
-        r'\b(taytot|bird|parrot)\b': 'creature'
+        r'\b(tay-tot|bird|parrot)\b': 'creature'
     }
     for pattern, replacement in replacements.items():
         text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
@@ -333,10 +333,10 @@ if __name__ == "__main__":
         inserts = {
             8: "Since the balide is now gone, should they go look in the forest, or by the pond?",
             13: "Where should they go to hide from the balides?",
-            17: "After saying goodbye to the Taytot where does the boy go next?",
-            22: "After falling off the gigin, where should the boy go next?",
-            27: "Should the boy ride the dobane or hop off?",
-            29: "What do you think is behind the kirop?",
+            17: "After saying goodbye to the tay-tot where does the boy go next?",
+            22: "After falling off the guyg-in, where should the boy go next?",
+            27: "Should the boy ride the doh-bane or hop off?",
+            29: "What do you think is behind the kyrop?",
         }
 
         with open(SCRIPT_PATH, 'r') as file:
@@ -495,7 +495,7 @@ if __name__ == "__main__":
                     #         ONLY USE THE CHILD's response if it makes sense as a response to your question.
                     #         Return only the one story sentence.
                             
-                    #         DO NOT use the word bees, betis, dobane, deer, balide, bird, taytot, or gigin in your response
+                    #         DO NOT use the word bees, behhtis, doh-bane, deer, balide, bird, tay-tot, or guyg-in in your response
                     #         """
                     #     }
                     # ]
@@ -524,7 +524,7 @@ if __name__ == "__main__":
                                     3. If the child's response was appropriate and matched the question: incorporate it naturally.
                                     4. The sentence must be consistent with your feedback above and must lead naturally into the rest of the fixed script.
                                     5. ONLY ONE sentence. Do not ask questions. Do not alter the direction of the fixed story that follows.
-                                    6. DO NOT use the word bees, betis, dobane, deer, balide, bird, taytot, or gigin in your response
+                                    6. DO NOT use the word bees, behhtis, doh-bane, deer, balide, bird, tay-tot, or guyg-in in your response
                             """
                         }
                     ]
