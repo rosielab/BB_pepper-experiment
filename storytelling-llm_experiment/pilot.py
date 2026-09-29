@@ -135,15 +135,25 @@ def format_audio_file(input_file):  # pepper only supports 16 bit audio files
     audio = audio + 15 # boost by +10 dB (try 6–15)
     audio.export(input_file + "_16b.wav", format="wav")
 
-def run_animation_on_pepper(animation_name = "top"):
-    # connect to pepper
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(pepper_ip, username='nao', password='nao')
+def run_animation_on_pepper(animation_name = "top", max_attempts=3):
+    # connect to pepper (best-effort: a flaky SSH auth handshake here
+    # should not take down the whole session, so failures are logged
+    # and swallowed after a few retries)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(pepper_ip, username='nao', password='nao')
 
-    command = "qicli call ALAnimationPlayer.runTag '{}'".format(animation_name)
-    stdin, stdout, stderr = ssh.exec_command(command)
-    ssh.close()
+            command = "qicli call ALAnimationPlayer.runTag '{}'".format(animation_name)
+            stdin, stdout, stderr = ssh.exec_command(command)
+            ssh.close()
+            return
+        except Exception as e:
+            print(f"[WARN] run_animation_on_pepper attempt {attempt}/{max_attempts} failed: {e}")
+            if attempt < max_attempts:
+                time.sleep(0.5)
+    print("[WARN] run_animation_on_pepper: giving up, continuing without animation.")
 
 def play_and_mark_pepper(local_wav_path: str):
     wait_for_file_complete(local_wav_path)

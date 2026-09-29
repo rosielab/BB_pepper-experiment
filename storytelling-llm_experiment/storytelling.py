@@ -63,7 +63,7 @@ WORK_OUTPUTS.mkdir(parents=True, exist_ok=True)
 WORK_RESULTS.mkdir(parents=True, exist_ok=True)
 
 VOICE = 'chanel' # replace with chanel/random/neutral, then ctrl+s to save
-SCRIPT_PATH = str(BASE_DIR / "llm_script_emoji_short.txt")
+SCRIPT_PATH = str(BASE_DIR / "llm_script_emoji_short.txt") # replace with the path to your script file
 WAV_PATH = str(WORK_OUTPUTS)
 ############################ TTS PARAMETERS ############################################################################
 #TTS_MODEL_PATH = os.path.join(os.path.dirname(__file__), "matcha_state_dict.pt")
@@ -93,9 +93,7 @@ if VOICE == 'chanel':
 
 
 ####################### ASR SETUP ######################################################################################
-
 ASR_MODEL = "medium.en"
-
 ########################################################################################################################
 class Recorder:
     def __init__(self):
@@ -172,6 +170,7 @@ def process_text(text: str, device: torch.device, language: str):
     )[None]
     x_lengths = torch.tensor([x.shape[-1]], dtype=torch.long, device=device)
     x_phones = sequence_to_text(x.squeeze(0).tolist())
+    # print("X Phones:", x_phones)
 
     return {"x_orig": text, "x": x, "x_lengths": x_lengths, "x_phones": x_phones}
 
@@ -297,19 +296,19 @@ def assert_required_models_available():
 def contains_only_non_emoji(string):
     return all(not emoji.is_emoji(char) for char in string) and len(string.strip()) > 0
 
-def apply_word_replacements(text: str) -> str:
-    if not text:
-        return text
-    replacements = {
-        r'\b(kyrop|crystal)\b': 'object',
-        r'\b(doh-bane|deer)\b': 'animal',
-        r'\b(guyg-in|mushroom)\b': 'plant',
-        r'\b(balides|bees)\b': 'creatures',
-        r'\b(tay-tot|bird|parrot)\b': 'creature'
-    }
-    for pattern, replacement in replacements.items():
-        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
-    return text
+# def apply_word_replacements(text: str) -> str:
+#     if not text:
+#         return text
+#     replacements = {
+#         r'\b(kyrop|crystal)\b': 'object',
+#         r'\b(doh-bane|deer)\b': 'animal',
+#         r'\b(guyg-in|mushroom)\b': 'plant',
+#         r'\b(balides|bees)\b': 'creatures',
+#         r'\b(tay-tot|bird|parrot)\b': 'creature'
+#     }
+#     for pattern, replacement in replacements.items():
+#         text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+#     return text
 
 if __name__ == "__main__":
     try:
@@ -331,11 +330,11 @@ if __name__ == "__main__":
         vocoder, denoiser = load_vocoder(VOCODER_NAME, paths["vocoder"], tts_device)
         
         inserts = {
-            8: "Since the balide is now gone, should they go look in the forest, or by the pond?",
+            8: "Since the behhtis is now gone, should they go look in the forest, or by the pond?",
             13: "Where should they go to hide from the balides?",
-            17: "After saying goodbye to the tay-tot where does the boy go next?",
+            17: "After saying goodbye to the taytot, where does the boy go next?",
             22: "After falling off the guyg-in, where should the boy go next?",
-            27: "Should the boy ride the doh-bane or hop off?",
+            27: "Should the boy ride the dobane or hop off?",
             29: "What do you think is behind the kyrop?",
         }
 
@@ -349,7 +348,8 @@ if __name__ == "__main__":
                     frames = wf.readframes(wf.getnframes())
                     sample_width = wf.getsampwidth()
                     rms = audioop.rms(frames, sample_width)
-                return rms < rms_threshold
+                return rms < rms_threshold       
+            
             
             # greeting
             participantName = input("Enter their name: ")
@@ -450,23 +450,24 @@ if __name__ == "__main__":
                             model="gpt-4o",
                             #logit_bias = {'3129': -100, '3314': -100, '55851': -100, '27538': -100, '50591': -100, '25148': -100, '133133': -100, '74130': -100, '70': -100, '329': -100, '38': -100, '499': -100, '13738': -100, '5008': -100, '21272': -100, '36140': -100, '78445': -100, '40634': -100, '51': -100, '107553': -100},
                             messages= [
-                                {"role": "system", "content": "You are a robot teaching assistant in a preschool reading an interactive story to 3-5 year olds. You have told part of a story and have asked the student a question. Politely comment on the student's answer. If the answer is if it is not rude or inappropriate (e.g., 'Oh that is a good idea!'). It is not your job to continue the story, just to be polite to the student and make a small comment. Don't ask questions."},
+                                {"role": "system", "content": "You are a robot teaching assistant in a preschool reading an interactive story to 4-5 year olds. You have told part of a story and have asked the student a question. Politely comment on the student's answer. If the answer is if it is not rude or inappropriate (e.g., 'Oh that is a good idea!'). It is not your job to continue the story, just to be polite to the student and make a small comment. Don't ask questions."},
                                 *messages,
                                 {"role": "user", "content": (
-                                    f"The question asked was {inserts[i]}. The student answered '{result}'. You might have misheard some of it or missed what the student said."
+                                    f"The question asked was {inserts[i]}. The student answered '{result}'. You might have misheard some of it, heard additional background noise, or missed what the student said."
                                     "1. If the student gave no response let them know that that is OK not to worry, you will think of something. "
                                     "2. If the answer is inappropriate or rude say that you are not sure about that and lets try something else. "
-                                    "3. If the response does not make sense in the context then acknowledge that maybe you did not hear right and that is OK you have an idea. "
-                                    "4. If the question offered specific options (like 'upstairs or downstairs' or 'forest or pond') and the child's answer is NOT one of those options: say something like 'Great Idea! But I'm not sure that's the best approach. That's okay I have an idea!' Do NOT say 'let's see what happens' or treat it as valid. "
-                                    "5. If the question was open ended but the response includes new locations or objects that are unusual for that location, acknowledge the creativity but do NOT approve it. Say you you're not sure that's the best approach and have a different idea."
-                                    "6. If the response is appropriate acknowledge the student's answer in one sentence. This should be a natural part of the conversation ('Good choice!', 'Neat, let's see what happens!' 'Interesting!'). You may incorporate the student's answer in your response if appropriate and natural to do so. "
+                                    "3. If the response does not make sense in the context, it is likely misheard by the speech to text model, correct it and use it as the new answer. "
+                                    "4. If the response still does not make sense in the context, then acknowledge that maybe you did not hear right and that is OK you have an idea. "
+                                    "5. If the question offered specific options (like 'upstairs or downstairs' or 'forest or pond') and the child's answer is NOT one of those options: say something like 'Great Idea! But I'm not sure that's the best approach. That's okay I have an idea!' Do NOT say 'let's see what happens' or treat it as valid. "
+                                    "6. If the question was open ended but the response includes new locations or objects that are unusual for that location, acknowledge the creativity but do NOT approve it. Say you you're not sure that's the best approach and have a different idea."
+                                    "7. If the response is appropriate acknowledge the student's answer in one sentence. This should be a natural part of the conversation ('Good choice!', 'Neat, let's see what happens!' 'Interesting!'). You may incorporate the student's answer in your response if appropriate and natural to do so. "
                                     "Only respond to the most recent response, do not respond to anything further back in the conversation. "
                                     "DO NOT ask questions"
                                 )},
                             ]
                         )
                         feedback_to_child = response.choices[0].message.content.strip()
-                        feedback_to_child = apply_word_replacements(feedback_to_child)
+                        # feedback_to_child = apply_word_replacements(feedback_to_child)
                     except (openai.APITimeoutError, Exception) as e:
                         print(f"[WARNING] API call failed: {e}")
                         feedback_to_child = "Hmm, maybe I didn't hear you quite right, and that's OK! I have an idea!"
@@ -496,7 +497,7 @@ if __name__ == "__main__":
                     #         ONLY USE THE CHILD's response if it makes sense as a response to your question.
                     #         Return only the one story sentence.
                             
-                    #         DO NOT use the word bees, behhtis, doh-bane, deer, balide, bird, tay-tot, or guyg-in in your response
+                    #         DO NOT use the word bees, betis, dobane, deer, balide, bird, taytot, or gigin in your response
                     #         """
                     #     }
                     # ]
@@ -521,11 +522,12 @@ if __name__ == "__main__":
 
                                 Follow these rules strictly:
                                     1. If the child gave no response or you responded that you have your own idea: pick whichever option fits the next story line best and write accordingly.
-                                    2. If the question had specific options (like 'upstairs or downstairs') and the child's answer was NOT one of those options: ignore their answer entirely and pick whichever option fits the story line best.
-                                    3. If the child's response was appropriate and matched the question: incorporate it naturally.
-                                    4. The sentence must be consistent with your feedback above and must lead naturally into the rest of the fixed script.
-                                    5. ONLY ONE sentence. Do not ask questions. Do not alter the direction of the fixed story that follows.
-                                    6. DO NOT use the word bees, behhtis, doh-bane, deer, balide, bird, tay-tot, or guyg-in in your response
+                                    2. If the response does not make sense in the context, it is likely misheard by the speach to text model, correct it and use it as the new answer.
+                                    3. If the question had specific options (like 'upstairs or downstairs') and the child's answer was NOT one of those options: ignore their answer entirely and pick whichever option fits the story line best.
+                                    4. If the child's response was appropriate and matched the question: incorporate it naturally.
+                                    5. The sentence must be consistent with your feedback above and must lead naturally into the rest of the fixed script.
+                                    6. ONLY ONE sentence. Do not ask questions. Do not alter the direction of the fixed story that follows.
+                                    7. DO NOT use the word behhtis, dobane, balide, balides, taytot, kyrop, or guyg-in in your response
                             """
                         }
                     ]
@@ -537,7 +539,7 @@ if __name__ == "__main__":
                             messages=story_generation_messages
                         )
                         answer_to_child = response.choices[0].message.content.strip()
-                        answer_to_child = apply_word_replacements(answer_to_child)
+                        # answer_to_child = apply_word_replacements(answer_to_child)
                     except (openai.APITimeoutError, Exception) as e:
                         answer_to_child = "Hmm, maybe I didn't hear you quite right, and that's OK! I have an idea!"
                     print("[Answer to student] " + answer_to_child)
